@@ -24,11 +24,17 @@ namespace Calculator712.Calculator
 		const string CalculationButtonSymbol = "=";
 		const string BackspaceButtonSymbol = "<-";
 
+		NumericButtonsPanel numericPanel;
+
 		public Action<CalculationData> CalculationRequested = delegate { };
 
 		public View()
 		{
 			InitializeComponent();
+			numericPanel = new NumericButtonsPanel();
+			numericPanel.Create();
+			ButtonsGrid.Children.Add(numericPanel);
+			Grid.SetColumn(numericPanel, 0);
 		}
 
 		public void AddOperation(ICalculatorOperation operation)
@@ -94,6 +100,104 @@ namespace Calculator712.Calculator
 			public string OperationSymbol { get; }
 			public string LeftOperand { get; }
 			public string RightOperand { get; }
+		}
+
+		class NumericButtonsPanel : Grid
+		{
+			List<NumericButton> buttons;
+
+			internal Action<int> ButtonPressed = delegate { };
+
+			internal NumericButtonsPanel()
+			{
+				buttons = new List<NumericButton>();
+			}
+
+			internal void Create()
+			{
+				CreateButtons();
+				AllignButtons();
+
+				void AllignButtons()
+				{
+					DefineGrid();
+					int currentRow = 0;
+					int currentColumn = 0;
+
+					foreach (var button in buttons)
+					{
+						if (currentColumn == 3)
+						{
+							currentColumn = 0;
+							currentRow++;
+						}
+
+						Grid.SetRow(button, currentRow);
+						Grid.SetColumn(button, currentColumn++);
+					}
+
+					void DefineGrid()
+					{
+						for(int i = 0; i < 4; i++)
+						{
+							var row = new RowDefinition();
+							this.RowDefinitions.Add(row);
+						}
+						for(int i = 0; i < 3; i++)
+						{
+							var column = new ColumnDefinition();
+							this.ColumnDefinitions.Add(column);
+						}
+					}
+				}
+				void CreateButtons()
+				{
+					int buttonsCount = 10;
+
+					for (int num = 0; num < buttonsCount; num++)
+					{
+						var button = CreateButton(num);
+
+						Children.Add(button);
+						buttons.Add(button);
+					}
+
+					NumericButton CreateButton(int number)
+					{
+						var button = NumericButton.WithNumber(number);
+						button.Click += ButtonClickHandler;
+
+						return button;
+					}
+				}
+			}
+			void ButtonClickHandler(object sender, RoutedEventArgs args)
+			{
+				var button = sender as NumericButton;
+				ButtonPressed(button.Value);
+			}
+			
+			class NumericButton : Button
+			{
+				internal static NumericButton WithNumber(int num)
+				{
+					return new NumericButton() 
+					{
+						Value = num
+					};
+				}
+
+				int value;
+				internal int Value
+				{
+					get => value;
+					set
+					{
+						this.value = value;
+						Content = value;
+					}
+				}
+			}
 		}
 	}
 }

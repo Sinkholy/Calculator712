@@ -5,7 +5,7 @@
         xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
         xmlns:local="clr-namespace:Calculator712.Calculator"
         mc:Ignorable="d"
-        Title="Window" Height="450" Width="800">
+        Title="Window" Height="450" Width="549">
 	<Grid Name="MainGrid">
 		<StackPanel Background="Green" Name="ResultPanel" Margin="0,230,0,0">
 			<TextBox Name="ResultTextBox"/>
@@ -16,18 +16,8 @@
 				<ColumnDefinition Name="OperationsColumn"/>
 				<ColumnDefinition Name="SystemOperationsColumn"/>
 			</Grid.ColumnDefinitions>
-			<Button Content="1" HorizontalAlignment="Left" Margin="10,10,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="2" HorizontalAlignment="Left" Margin="55,10,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="3" HorizontalAlignment="Left" Margin="100,10,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="4" HorizontalAlignment="Left" Margin="10,55,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="5" HorizontalAlignment="Left" Margin="55,55,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="6" HorizontalAlignment="Left" Margin="100,55,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="7" HorizontalAlignment="Left" Margin="10,100,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="8" HorizontalAlignment="Left" Margin="55,100,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="9" HorizontalAlignment="Left" Margin="100,100,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="0" HorizontalAlignment="Left" Margin="55,145,0,0" VerticalAlignment="Top" Height="40" Width="40" Click="NumericButtonClickHandler"/>
-			<Button Content="=" HorizontalAlignment="Left" Margin="167,80,0,0" VerticalAlignment="Top" Height="60" Width="90" Grid.Column="2" Click="CalculationButtonClickHandler"/>
-			<Button Content="&lt;-" HorizontalAlignment="Left" Margin="167,10,0,0" VerticalAlignment="Top" Height="60" Width="90" Grid.Column="2" Click="BackspaceButtonClickHandler"/>
+			<Button Content="=" HorizontalAlignment="Left" Margin="59,75,0,0" VerticalAlignment="Top" Height="60" Width="114" Grid.Column="2" Click="CalculationButtonClickHandler"/>
+			<Button Content="&lt;-" HorizontalAlignment="Left" Margin="59,10,0,0" VerticalAlignment="Top" Height="60" Width="114" Grid.Column="2" Click="BackspaceButtonClickHandler"/>
 		</Grid>
 	</Grid>
 </Window>
