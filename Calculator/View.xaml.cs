@@ -32,7 +32,8 @@ namespace Calculator712.Calculator
 		{
 			InitializeComponent();
 			numericPanel = new NumericButtonsPanel();
-			numericPanel.Create();
+			numericPanel.ButtonPressed += NumericButtonClickHandler;
+
 			ButtonsGrid.Children.Add(numericPanel);
 			Grid.SetColumn(numericPanel, 0);
 		}
@@ -62,11 +63,9 @@ namespace Calculator712.Calculator
 		{
 			ResultTextBox.Text = "";
 		}
-		void NumericButtonClickHandler(object sender, RoutedEventArgs args)
+		void NumericButtonClickHandler(int value)
 		{
-			var button = sender as Button;
-			string number = button.Content as string;
-			AddStringToResultPanel(number);
+			AddStringToResultPanel(value.ToString());
 		}
 		void OperationButtonClickHandler(object sender, RoutedEventArgs args)
 		{
@@ -104,84 +103,49 @@ namespace Calculator712.Calculator
 
 		class NumericButtonsPanel : Grid
 		{
-			List<NumericButton> buttons;
+			GridMesh mesh;
 
 			internal Action<int> ButtonPressed = delegate { };
 
 			internal NumericButtonsPanel()
 			{
-				buttons = new List<NumericButton>();
+				mesh = GridMesh.AssignTo(this);
+				ApplyLayout();
 			}
-
-			internal void Create()
+			void ApplyLayout()
 			{
-				CreateButtons();
-				AllignButtons();
+				mesh.Slice(4,3);
 
-				void AllignButtons()
+				mesh.Pick(3, 1).Content = NumericButton.WithNumber(0);
+				mesh.Pick(0, 0).Content = NumericButton.WithNumber(1);
+				mesh.Pick(0, 1).Content = NumericButton.WithNumber(2);
+				mesh.Pick(0, 2).Content = NumericButton.WithNumber(3);
+				mesh.Pick(1, 0).Content = NumericButton.WithNumber(4);
+				mesh.Pick(1, 1).Content = NumericButton.WithNumber(5);
+				mesh.Pick(1, 2).Content = NumericButton.WithNumber(6);
+				mesh.Pick(2, 0).Content = NumericButton.WithNumber(7);
+				mesh.Pick(2, 1).Content = NumericButton.WithNumber(8);
+				mesh.Pick(2, 2).Content = NumericButton.WithNumber(9);
+
+				foreach (var cell in mesh.Cells)
 				{
-					DefineGrid();
-					int currentRow = 0;
-					int currentColumn = 0;
-
-					foreach (var button in buttons)
+					if(cell.Content is Button button)
 					{
-						if (currentColumn == 3)
-						{
-							currentColumn = 0;
-							currentRow++;
-						}
-
-						Grid.SetRow(button, currentRow);
-						Grid.SetColumn(button, currentColumn++);
-					}
-
-					void DefineGrid()
-					{
-						for(int i = 0; i < 4; i++)
-						{
-							var row = new RowDefinition();
-							this.RowDefinitions.Add(row);
-						}
-						for(int i = 0; i < 3; i++)
-						{
-							var column = new ColumnDefinition();
-							this.ColumnDefinitions.Add(column);
-						}
-					}
-				}
-				void CreateButtons()
-				{
-					int buttonsCount = 10;
-
-					for (int num = 0; num < buttonsCount; num++)
-					{
-						var button = CreateButton(num);
-
-						Children.Add(button);
-						buttons.Add(button);
-					}
-
-					NumericButton CreateButton(int number)
-					{
-						var button = NumericButton.WithNumber(number);
 						button.Click += ButtonClickHandler;
-
-						return button;
 					}
 				}
 			}
+
 			void ButtonClickHandler(object sender, RoutedEventArgs args)
 			{
 				var button = sender as NumericButton;
 				ButtonPressed(button.Value);
 			}
-			
 			class NumericButton : Button
 			{
 				internal static NumericButton WithNumber(int num)
 				{
-					return new NumericButton() 
+					return new NumericButton()
 					{
 						Value = num
 					};
