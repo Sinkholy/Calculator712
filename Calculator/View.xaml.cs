@@ -101,7 +101,7 @@ namespace Calculator712.Calculator
 			List<int> input;
 			int firstOperandNumbersCount;
 			TextBox inputBox;
-			TextBox historyBox;
+			HistoryBox history;
 
 			public ResultPanel()
 			{
@@ -109,7 +109,7 @@ namespace Calculator712.Calculator
 				input = new List<int>();
 				mesh = GridMesh.AssignTo(this);
 				inputBox = new TextBox();
-				historyBox = new TextBox();
+				history = new HistoryBox();
 				ApplyLayout();
 			}
 			void ApplyLayout()
@@ -117,7 +117,7 @@ namespace Calculator712.Calculator
 				mesh.Slice(2, 1);
 
 				mesh.Pick(1, 0).Content = inputBox;
-				mesh.Pick(0, 0).Content = historyBox;
+				mesh.Pick(0, 0).Content = history.View;
 			}
 
 			internal (int a, int b, string symbol) GetCurrent()
@@ -147,11 +147,11 @@ namespace Calculator712.Calculator
 			}
 			internal void PushResultToHistory()
 			{
-				historyBox.AppendText("\n " + compData.ToString());
+				history.Add(compData);  
 			}
 			internal void ClearHistory()
 			{
-				historyBox.Clear();
+				history.Clear();
 			}
 			internal void ClearResult()
 			{
@@ -192,6 +192,86 @@ namespace Calculator712.Calculator
 				}
 			}
 
+			class HistoryBox // TODO: нужно подумать над тем, как реализовать в этом классе UIElement
+							// чтобы не делать матрёшку из вызовов View.
+			{
+				readonly Archive archive;
+				readonly HistoryView view;
+
+				internal HistoryBox()
+				{
+					archive = new Archive();
+					view = new HistoryView();
+				}
+
+				internal UIElement View => view.View; // TODO: ужасная матрёшка
+
+				internal IReadOnlyCollection<ComputationData> GetArchive()
+				{
+					return archive.GetFullArchive();
+				}
+				internal void Add(ComputationData computation)
+				{
+					archive.Add(computation);
+					view.Add(computation.ToString());
+				}
+				internal void Clear()
+				{
+					archive.Clear();
+					view.Clear();
+				}
+
+				class HistoryView : UIElement
+				{
+					readonly ListBox list;
+
+					internal HistoryView()
+					{
+						list = new ListBox();
+					}
+
+					internal UIElement View => list;
+
+					internal void Add(string val)
+					{
+						var button = new Button() { Content = val };
+						list.Items.Add(button);
+					}
+					internal void Clear()
+					{
+						list.Items.Clear();
+					}
+				}
+				class Archive
+				{
+					readonly List<ComputationData> computations;
+
+					internal Archive()
+					{
+						computations = new List<ComputationData>();
+					}
+
+					internal void Add(ComputationData computation)
+					{
+						computations.Add(computation);
+					}
+					internal void Clear()
+					{
+						computations.Clear();
+					}
+					internal ComputationData this[int index]
+					{
+						get
+						{
+							return computations[index];
+						}
+					}
+					internal IReadOnlyCollection<ComputationData> GetFullArchive()
+					{
+						return computations;
+					}
+				}
+			}
 			class ComputationData
 			{
 				const string EqualSign = "=";
