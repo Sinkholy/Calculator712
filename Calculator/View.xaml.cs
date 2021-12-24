@@ -96,18 +96,16 @@ namespace Calculator712.Calculator
 
 		class ResultPanel : Grid
 		{
-			const string EqualSign = "=";
-
+			ComputationData compData;
 			GridMesh mesh;
 			List<int> input;
-			string operationSymbol;
 			int firstOperandNumbersCount;
-			int result;
 			TextBox inputBox;
 			TextBox historyBox;
 
 			public ResultPanel()
 			{
+				compData = new ComputationData();
 				input = new List<int>();
 				mesh = GridMesh.AssignTo(this);
 				inputBox = new TextBox();
@@ -125,7 +123,9 @@ namespace Calculator712.Calculator
 			internal (int a, int b, string symbol) GetCurrent()
 			{
 				Combine(out int a, out int b);
-				return new(a, b, operationSymbol);
+				compData.LeftOperand = a;
+				compData.RightOperand = b;
+				return new(compData.LeftOperand, compData.RightOperand, compData.Symbol);
 			}
 			internal void AppendInput(int value)
 			{
@@ -135,21 +135,19 @@ namespace Calculator712.Calculator
 			internal void AppendSymbol(string symbol)
 			{
 				inputBox.Text += " " + symbol + " ";
-
-				operationSymbol = symbol;
+				compData.Symbol = symbol;
 				firstOperandNumbersCount = input.Count;
 			}
 			internal void SetResult(int value)
 			{
-				inputBox.AppendText(EqualSign);
-				inputBox.AppendText(value.ToString());
-				result = value;
+				compData.Result = value;
+				inputBox.Text = compData.ToString();
 				PushResultToHistory();
 				ClearResult();
 			}
 			internal void PushResultToHistory()
 			{
-				historyBox.AppendText("\n " + result);
+				historyBox.AppendText("\n " + compData.ToString());
 			}
 			internal void ClearHistory()
 			{
@@ -159,7 +157,10 @@ namespace Calculator712.Calculator
 			{
 				inputBox.Clear();
 				input.Clear();
-				result = 0;
+				compData.Symbol = string.Empty;
+				compData.LeftOperand = 0;
+				compData.RightOperand = 0;
+				compData.Result = 0;
 			}
 
 			void Combine(out int operandA, out int operandB)
@@ -188,6 +189,22 @@ namespace Calculator712.Calculator
 					}
 
 					return int.Parse(sb.ToString());
+				}
+			}
+
+			class ComputationData
+			{
+				const string EqualSign = "=";
+				const string Spacer = " ";
+
+				internal int LeftOperand { get; set; }
+				internal int RightOperand { get; set; }
+				internal string Symbol { get; set; }
+				internal int Result { get; set; }
+
+				public override string ToString()
+				{
+					return $"{LeftOperand}{Spacer}{Symbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
 				}
 			}
 		}
