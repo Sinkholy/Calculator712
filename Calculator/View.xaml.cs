@@ -26,6 +26,7 @@ namespace Calculator712.Calculator
 		const string BackspaceButtonSymbol = "<-";
 
 		NumericButtonsPanel numericPanel;
+		ResultPanel resultPanel;
 
 		public Action<CalculationData> CalculationRequested = delegate { };
 
@@ -35,9 +36,12 @@ namespace Calculator712.Calculator
 			var numericPanelLayout = new DefaultNumpadLayout();
 			numericPanel = new NumericButtonsPanel(numericPanelLayout);
 			numericPanel.ButtonPressed += NumericButtonClickHandler;
-
+			
 			ButtonsGrid.Children.Add(numericPanel);
 			Grid.SetColumn(numericPanel, 0);
+
+			resultPanel = new ResultPanel();
+			ResultGrid.Children.Add(resultPanel);
 		}
 
 		public void AddOperation(ICalculatorOperation operation)
@@ -52,46 +56,33 @@ namespace Calculator712.Calculator
 		}
 
 		void CalculationButtonClickHandler(object sender, RoutedEventArgs args)
-		{
-			var expression = ResultTextBox.Text;
-			string[] parsed = expression.Split(" ");
-			var leftOperand = parsed[0];
-			var operationSymbol = parsed[1];
-			var rightOperand = parsed[2];
-			var calculationData = new CalculationData(operationSymbol, leftOperand, rightOperand);
+		 {
+			var current = resultPanel.GetCurrent();
+			var calculationData = new CalculationData(current.symbol, current.a, current.b);
 			CalculationRequested(calculationData);
 		}
 		void BackspaceButtonClickHandler(object sender, RoutedEventArgs args)
 		{
-			ResultTextBox.Text = "";
+			//ResultTextBox.Text = "";
 		}
 		void NumericButtonClickHandler(int value)
 		{
-			AddStringToResultPanel(value.ToString());
+			resultPanel.AppendInput(value);
 		}
 		void OperationButtonClickHandler(object sender, RoutedEventArgs args)
 		{
 			var button = sender as Button;
 			string operation = button.Content as string;
-			AddStringToResultPanel(" ");
-			AddStringToResultPanel(operation);
-			AddStringToResultPanel(" ");
+			resultPanel.AppendSymbol(operation);
 		}
-		void AddStringToResultPanel(string value)
+		public void SetResult(int value)
 		{
-			ResultTextBox.Text += value;
-		}
-		public void SetResult(string value)
-		{
-			AddStringToResultPanel(" ");
-			AddStringToResultPanel("=");
-			AddStringToResultPanel(" ");
-			AddStringToResultPanel(value);
+			resultPanel.SetResult(value);
 		}
 
 		public class CalculationData
 		{
-			public CalculationData(string operationSymbol, string leftOperand, string rightOperand)
+			public CalculationData(string operationSymbol, int leftOperand, int rightOperand)
 			{
 				OperationSymbol = operationSymbol;
 				LeftOperand = leftOperand;
@@ -99,10 +90,107 @@ namespace Calculator712.Calculator
 			}
 
 			public string OperationSymbol { get; }
-			public string LeftOperand { get; }
-			public string RightOperand { get; }
+			public int LeftOperand { get; }
+			public int RightOperand { get; }
 		}
 
+		class ResultPanel : Grid
+		{
+			const string EqualSign = "=";
+
+			GridMesh mesh;
+			List<int> input;
+			string operationSymbol;
+			int firstOperandNumbersCount;
+			int result;
+			TextBox inputBox;
+			TextBox historyBox;
+
+			public ResultPanel()
+			{
+				input = new List<int>();
+				mesh = GridMesh.AssignTo(this);
+				inputBox = new TextBox();
+				historyBox = new TextBox();
+				ApplyLayout();
+			}
+			void ApplyLayout()
+			{
+				mesh.Slice(2, 1);
+
+				mesh.Pick(1, 0).Content = inputBox;
+				mesh.Pick(0, 0).Content = historyBox;
+			}
+
+			internal (int a, int b, string symbol) GetCurrent()
+			{
+				Combine(out int a, out int b);
+				return new(a, b, operationSymbol);
+			}
+			internal void AppendInput(int value)
+			{
+				input.Add(value);
+				inputBox.Text += value;
+			}
+			internal void AppendSymbol(string symbol)
+			{
+				inputBox.Text += " " + symbol + " ";
+
+				operationSymbol = symbol;
+				firstOperandNumbersCount = input.Count;
+			}
+			internal void SetResult(int value)
+			{
+				inputBox.AppendText(EqualSign);
+				inputBox.AppendText(value.ToString());
+				result = value;
+				PushResultToHistory();
+				ClearResult();
+			}
+			internal void PushResultToHistory()
+			{
+				historyBox.AppendText("\n " + result);
+			}
+			internal void ClearHistory()
+			{
+				historyBox.Clear();
+			}
+			internal void ClearResult()
+			{
+				inputBox.Clear();
+				input.Clear();
+				result = 0;
+			}
+
+			void Combine(out int operandA, out int operandB)
+			{
+				operandA = CalculateLeftOperand();
+				operandB = CalculateRightOperand();
+
+				int CalculateLeftOperand()
+				{
+					var sb = new StringBuilder(firstOperandNumbersCount);
+
+					for (int i = 0; i < firstOperandNumbersCount; i++)
+					{
+						sb.Append(input[i]);
+					}
+
+					return int.Parse(sb.ToString());
+				}
+				int CalculateRightOperand()
+				{
+					var sb = new StringBuilder(firstOperandNumbersCount);
+
+					for (int i = firstOperandNumbersCount; i < input.Count; i++)
+					{
+						sb.Append(input[i]);
+					}
+
+					return int.Parse(sb.ToString());
+				}
+			}
+		}
 		internal abstract class MeshLayout
 		{
 			public abstract void ApplyTo(GridMesh target);
