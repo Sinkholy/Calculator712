@@ -96,19 +96,14 @@ namespace Calculator712.Calculator
 
 		class ResultPanel : Grid
 		{
-			ComputationData compData;
 			GridMesh mesh;
-			List<int> input;
-			int firstOperandNumbersCount;
-			TextBox inputBox;
+			Input input;
 			HistoryBox history;
 
 			public ResultPanel()
 			{
-				compData = new ComputationData();
-				input = new List<int>();
 				mesh = GridMesh.AssignTo(this);
-				inputBox = new TextBox();
+				input = new Input();
 				history = new HistoryBox();
 				ApplyLayout();
 			}
@@ -116,38 +111,31 @@ namespace Calculator712.Calculator
 			{
 				mesh.Slice(2, 1);
 
-				mesh.Pick(1, 0).Content = inputBox;
+				mesh.Pick(1, 0).Content = input.View;
 				mesh.Pick(0, 0).Content = history.View;
 			}
 
 			internal (int a, int b, string symbol) GetCurrent()
 			{
-				Combine(out int a, out int b);
-				compData.LeftOperand = a;
-				compData.RightOperand = b;
-				return new(compData.LeftOperand, compData.RightOperand, compData.Symbol);
+				return new(input.Computation.LeftOperand,
+						input.Computation.RightOperand,
+						input.Computation.Symbol);
 			}
 			internal void AppendInput(int value)
 			{
-				input.Add(value);
-				inputBox.Text += value;
+				input.AddToCurrentOperand(value);
 			}
 			internal void AppendSymbol(string symbol)
 			{
-				inputBox.Text += " " + symbol + " ";
-				compData.Symbol = symbol;
-				firstOperandNumbersCount = input.Count;
+				input.SetOperation(symbol);
 			}
 			internal void SetResult(int value)
 			{
-				compData.Result = value;
-				inputBox.Text = compData.ToString();
-				PushResultToHistory();
-				ClearResult();
+				input.SetResult(value);
 			}
 			internal void PushResultToHistory()
 			{
-				history.Add(compData);  
+				history.Add(input.Computation);  
 			}
 			internal void ClearHistory()
 			{
@@ -155,43 +143,118 @@ namespace Calculator712.Calculator
 			}
 			internal void ClearResult()
 			{
-				inputBox.Clear();
 				input.Clear();
-				compData.Symbol = string.Empty;
-				compData.LeftOperand = 0;
-				compData.RightOperand = 0;
-				compData.Result = 0;
 			}
 
-			void Combine(out int operandA, out int operandB)
+			class Input // TODO: читай HistoryBox, здесь то же самое.
 			{
-				operandA = CalculateLeftOperand();
-				operandB = CalculateRightOperand();
+				ComputationData computation;
+				List<int> input;
+				int firstOperandNumbersCount;
+				InputView view;
 
-				int CalculateLeftOperand()
+				internal Input()
 				{
-					var sb = new StringBuilder(firstOperandNumbersCount);
-
-					for (int i = 0; i < firstOperandNumbersCount; i++)
-					{
-						sb.Append(input[i]);
-					}
-
-					return int.Parse(sb.ToString());
+					computation = new ComputationData();
+					input = new List<int>();
+					view = new InputView();
 				}
-				int CalculateRightOperand()
-				{
-					var sb = new StringBuilder(firstOperandNumbersCount);
 
-					for (int i = firstOperandNumbersCount; i < input.Count; i++)
+				internal ComputationData Computation
+				{
+					get
 					{
-						sb.Append(input[i]);
+						CalculateOperands();
+						return computation;
+					}
+				}
+				internal UIElement View => view.View;
+
+				internal void AddToCurrentOperand(int value)
+				{
+					input.Add(value);
+					view.Append(value.ToString());
+				}
+				internal void SetOperation(string symbol)
+				{
+					computation.Symbol = symbol;
+					firstOperandNumbersCount = input.Count;
+					view.Append(symbol);
+				}
+				internal void SetResult(int value)
+				{
+					computation.Result = value;
+					view.Set(computation.ToString());
+				}
+				internal void Clear()
+				{
+					input.Clear();
+					firstOperandNumbersCount = 0;
+					view.Clear();
+				}
+				void CalculateOperands()
+				{
+					computation.LeftOperand = CalculateLeftOperand();
+					computation.RightOperand = CalculateRightOperand();
+
+					int CalculateLeftOperand()
+					{
+						var sb = new StringBuilder(firstOperandNumbersCount);
+
+						for (int i = 0; i < firstOperandNumbersCount; i++)
+						{
+							sb.Append(input[i]);
+						}
+
+						return int.Parse(sb.ToString());
+					}
+					int CalculateRightOperand()
+					{
+						var sb = new StringBuilder(firstOperandNumbersCount);
+
+						for (int i = firstOperandNumbersCount; i < input.Count; i++)
+						{
+							sb.Append(input[i]);
+						}
+
+						return int.Parse(sb.ToString());
+					}
+				}
+
+				class InputView
+				{
+					const string SpacerSymbol = " "; // TODO: спейсеры и их логика должны быть здесь?
+
+					readonly TextBlock text;
+
+					public InputView()
+					{
+						text = new TextBlock();
 					}
 
-					return int.Parse(sb.ToString());
+					internal UIElement View => text;
+
+					internal void Append(string val, bool usingSpacers = true)
+					{
+						if (usingSpacers)
+						{
+							text.Text += $"{SpacerSymbol}{val}{SpacerSymbol}";
+						}
+						else
+						{
+							text.Text += val;
+						}
+					}
+					internal void Set(string val)
+					{
+						text.Text = val;
+					}
+					internal void Clear()
+					{
+						text.Text = string.Empty;
+					}
 				}
 			}
-
 			class HistoryBox // TODO: нужно подумать над тем, как реализовать в этом классе UIElement
 							// чтобы не делать матрёшку из вызовов View.
 			{
