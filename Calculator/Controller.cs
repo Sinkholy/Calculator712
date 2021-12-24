@@ -31,10 +31,8 @@ namespace Calculator712.Calculator
 		void OnCalculationRequested(CalculationData data)
 		{
 			var targetOperation = GetOperationBySymbol(data.OperationSymbol);
-			int leftOperandParsed = int.Parse(data.LeftOperand);
-			int rightOperandParsed = int.Parse(data.RightOperand);
-			var result = targetOperation.Calculate(leftOperandParsed, rightOperandParsed);
-			View.SetResult(result.ToString());
+			var result = targetOperation.Calculate(data.LeftOperand, data.RightOperand);
+			View.SetResult(result);
 		}
 		ICalculatorOperation GetOperationBySymbol(string symbol)
 		{
