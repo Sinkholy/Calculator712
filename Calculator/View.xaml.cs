@@ -25,6 +25,7 @@ namespace Calculator712.Calculator
 		const string CalculationButtonSymbol = "=";
 		const string BackspaceButtonSymbol = "<-";
 
+		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
 		Input input;
 		HistoryBox history;
@@ -37,9 +38,13 @@ namespace Calculator712.Calculator
 			var numericPanelLayout = new DefaultNumpadLayout();
 			numericPanel = new NumericButtonsPanel(numericPanelLayout);
 			numericPanel.ButtonPressed += NumericButtonClickHandler;
-			
 			ButtonsGrid.Children.Add(numericPanel);
 			Grid.SetColumn(numericPanel, 0);
+
+			operationsPanel = new OperationButtonsPanel();
+			operationsPanel.ButtonPressed += OperationButtonClickHandler;
+			ButtonsGrid.Children.Add(operationsPanel);
+			Grid.SetColumn(operationsPanel, 1);
 
 			input = new Input();
 			InputGrid.Children.Add(input.View);
@@ -50,13 +55,7 @@ namespace Calculator712.Calculator
 
 		public void AddOperation(ICalculatorOperation operation)
 		{
-			var operationButton = new Button()
-			{
-				Content = operation.Symbol
-			};
-			operationButton.Click += OperationButtonClickHandler;
-			ButtonsGrid.Children.Add(operationButton);
-			Grid.SetColumn(operationButton, 1);
+			operationsPanel.AddOperation(operation.Symbol);
 		}
 
 		void CalculationButtonClickHandler(object sender, RoutedEventArgs args)
@@ -81,12 +80,10 @@ namespace Calculator712.Calculator
 			}
 			input.AddToCurrentOperand(value);
 		}
-		void OperationButtonClickHandler(object sender, RoutedEventArgs args)
+		void OperationButtonClickHandler(string operation)
 		{
 			if (!input.OperationAdded)
 			{
-				var button = sender as Button;
-				string operation = button.Content as string;
 				input.SetOperation(operation);
 			}
 		}
@@ -426,6 +423,38 @@ namespace Calculator712.Calculator
 						Content = value;
 					}
 				}
+			}
+		}
+		class OperationButtonsPanel : Grid
+		{
+			GridMesh mesh;
+			int currentOp = 0;
+
+			internal Action<string> ButtonPressed = delegate { };
+
+			public OperationButtonsPanel()
+			{
+				mesh = GridMesh.AssignTo(this);
+				ApplyLayout();
+			}
+			void ApplyLayout()
+			{
+				mesh.Slice(4, 1);
+			}
+
+			internal void AddOperation(string symbol)
+			{
+				var button = new Button() { Content = symbol };
+				button.Click += ButtonClickHandler;
+				var cell = mesh.Pick(currentOp++, 0);
+				cell.Content = button;
+			}
+
+			void ButtonClickHandler(object sender, RoutedEventArgs args)
+			{
+				var button = sender as Button;
+				var operation = button.Content as string;
+				ButtonPressed(operation); // TODO: possible NRE?
 			}
 		}
 	}
