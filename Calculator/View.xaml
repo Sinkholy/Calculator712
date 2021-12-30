@@ -7,7 +7,8 @@
         mc:Ignorable="d"
         Title="Window" Height="450" Width="549">
 	<Grid Name="MainGrid">
-		<Grid Background="AntiqueWhite" Name="ResultGrid" Margin="0,230,0,0"/>
+		<Grid Background="AntiqueWhite" Name="HistoryGrid" Margin="0,230,275,0"/>
+		<Grid Background="AntiqueWhite" Name="InputGrid" Margin="274,230,1,0"/>
 		<Grid Background="AliceBlue" Margin="0,0,0,204" Name="ButtonsGrid">
 			<Grid.ColumnDefinitions>
 				<ColumnDefinition Name="NumpadColumn"/>
