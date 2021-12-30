@@ -60,10 +60,13 @@ namespace Calculator712.Calculator
 		}
 
 		void CalculationButtonClickHandler(object sender, RoutedEventArgs args)
-		 {
-			var current = input.Computation;
-			var calculationData = new CalculationData(current.Symbol, current.LeftOperand, current.RightOperand);
-			CalculationRequested(calculationData);
+		{
+			if (input.ComputationReadyToProcess)
+			{
+				var current = input.Computation;
+				var calculationData = new CalculationData(current.Symbol, current.LeftOperand, current.RightOperand);
+				CalculationRequested(calculationData);
+			}
 		}
 		void BackspaceButtonClickHandler(object sender, RoutedEventArgs args)
 		{
@@ -71,13 +74,21 @@ namespace Calculator712.Calculator
 		}
 		void NumericButtonClickHandler(int value)
 		{
+			if (input.ContainsResult)
+			{
+				history.Add(input.Computation);
+				input.Clear();
+			}
 			input.AddToCurrentOperand(value);
 		}
 		void OperationButtonClickHandler(object sender, RoutedEventArgs args)
 		{
-			var button = sender as Button;
-			string operation = button.Content as string;
-			input.SetOperation(operation);
+			if (!input.OperationAdded)
+			{
+				var button = sender as Button;
+				string operation = button.Content as string;
+				input.SetOperation(operation);
+			}
 		}
 		public void SetResult(int value)
 		{
@@ -112,6 +123,11 @@ namespace Calculator712.Calculator
 				view = new InputView();
 			}
 
+			internal bool ContainsLeftOperand => input.Count > 0;
+			internal bool ContainsRightOperand => firstOperandNumbersCount > 0;
+			internal bool OperationAdded => !string.IsNullOrWhiteSpace(computation.Symbol);
+			internal bool ContainsResult => computation.Result != 0; // UNDONE: затычка
+			internal bool ComputationReadyToProcess => ContainsLeftOperand && OperationAdded && ContainsRightOperand;
 			internal ComputationData Computation
 			{
 				get
@@ -143,6 +159,7 @@ namespace Calculator712.Calculator
 				input.Clear();
 				firstOperandNumbersCount = 0;
 				view.Clear();
+				computation = new ComputationData();
 			}
 			void CalculateOperands()
 			{
