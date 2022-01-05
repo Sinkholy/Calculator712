@@ -65,6 +65,7 @@ namespace Calculator712
 				{
 					var cell = new Cell(currentRowIndex, i);
 					cell.ContentChanged += OnCellContentChanged;
+					cell.ContentCleared += OnCellContentCleared;
 					result.Add(cell);
 				}
 				return result;
@@ -92,6 +93,7 @@ namespace Calculator712
 				{
 					var cell = new Cell(i, currentColumnIndex);
 					cell.ContentChanged += OnCellContentChanged;
+					cell.ContentCleared += OnCellContentCleared;
 					result.Add(cell);
 				}
 				return result;
@@ -109,20 +111,16 @@ namespace Calculator712
 				AddColumn();
 			}
 		}
-		void OnCellContentChanged(Cell cell, UIElement content)
+		void OnCellContentChanged(Cell.ContentChangedArgs args)
 		{
-			if (content is null)
-			{
-				ClearCellContent(cell);
-			}
-			grid.Children.Add(content);
-			Grid.SetRow(content, cell.Row);
-			Grid.SetColumn(content, cell.Column);
+			grid.Children.Remove(args.PreviousContent);
+			grid.Children.Add(args.NewContent);
+			Grid.SetRow(args.NewContent, args.CellRow);
+			Grid.SetColumn(args.NewContent, args.CellColumn);
 		}
-		void ClearCellContent(Cell cell)
+		void OnCellContentCleared(Cell.ContentChangedArgs args)
 		{
-			var row = grid.RowDefinitions[3];
-			var column = grid.ColumnDefinitions[3];
+			grid.Children.Remove(args.PreviousContent);
 		}
 		internal void SwapPositions(Cell a, Cell b)
 		{
@@ -155,7 +153,8 @@ namespace Calculator712
 
 		internal class Cell
 		{
-			internal Action<Cell, UIElement> ContentChanged = delegate { };
+			internal Action<ContentChangedArgs> ContentChanged = delegate { };
+			internal Action<ContentChangedArgs> ContentCleared = delegate { };
 
 			internal Cell(int row, int column)
 			{
@@ -173,14 +172,43 @@ namespace Calculator712
 				get => _content;
 				set
 				{
+					RaiseEvent();
 					_content = value;
-					ContentChanged(this, value);
+
+					void RaiseEvent()
+					{
+						var eventArgs = new ContentChangedArgs(Row, Column, Content, value);
+						if (value is null)
+						{
+							ContentCleared(eventArgs);
+						}
+						else
+						{
+							ContentChanged(eventArgs);
+						}
+					}
 				}
 			}
 
 			internal void ClearContent()
 			{
 				Content = null;
+			}
+
+			internal class ContentChangedArgs
+			{
+				internal ContentChangedArgs(int cellRow, int cellColumn, UIElement previousContent, UIElement newContent)
+				{
+					CellRow = cellRow;
+					CellColumn = cellColumn;
+					PreviousContent = previousContent;
+					NewContent = newContent;
+				}
+
+				internal int CellRow { get; }
+				internal int CellColumn { get; }
+				internal UIElement PreviousContent { get; }
+				internal UIElement NewContent { get; }
 			}
 		}
 		internal class CellsEnumerable : IEnumerable<Cell>
