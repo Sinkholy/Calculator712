@@ -123,8 +123,35 @@ namespace Calculator712
 		{
 			var row = grid.RowDefinitions[3];
 			var column = grid.ColumnDefinitions[3];
-
 		}
+		internal void SwapPositions(Cell a, Cell b)
+		{
+			int aOriginalRow = a.Row;
+			int aOriginalColumn = a.Column;
+			ChangeCellPosition(a, b.Row, b.Column);
+			ChangeCellPosition(b, aOriginalRow, aOriginalColumn);
+		}
+		internal void ChangeCellPosition(Cell cell, int targetRow, int targetColumn) // TODO: проверка параметров
+		{
+			cell.Row = targetRow;
+			cell.Column = targetColumn;
+			Grid.SetRow(cell.Content, targetRow);
+			Grid.SetColumn(cell.Content, targetColumn);
+			RemoveCellFromOriginalPosition();
+			AddCellToNewLocation();
+
+			void RemoveCellFromOriginalPosition()
+			{
+				rows[cell.Row][cell.Column] = null;
+				columns[cell.Column][cell.Row] = null;
+			}
+			void AddCellToNewLocation()
+			{
+				rows[targetRow][targetColumn] = cell;
+				columns[targetColumn][targetRow] = cell;
+			}
+		}
+
 
 		internal class Cell
 		{
@@ -138,8 +165,8 @@ namespace Calculator712
 
 			internal bool Filled => Content != null;
 			internal bool Blocked { get; set; }
-			internal int Column { get; private set; }
-			internal int Row { get; private set; }
+			public int Column { get; internal set; }
+			public int Row { get; internal set; }
 			UIElement _content;
 			internal UIElement Content
 			{
