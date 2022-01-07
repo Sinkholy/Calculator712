@@ -183,7 +183,13 @@ namespace Calculator712
 
 					void RaiseEvent()
 					{
-						var eventArgs = new ContentChangedArgs(Row, Column, Content, value);
+						var eventArgs = new ContentChangedArgs
+						{
+							CellColumn = Column,
+							CellRow = Row,
+							PreviousContent = Content,
+							NewContent = value
+						};
 						if (value is null)
 						{
 							ContentCleared(eventArgs);
@@ -201,12 +207,12 @@ namespace Calculator712
 				get => _visibility;
 				set
 				{
-					var eventArgs = new VisibilityChangedArgs 
-					{ 
-						CellRow = Row, 
-						CellColumn = Column, 
+					var eventArgs = new VisibilityChangedArgs
+					{
+						CellRow = Row,
+						CellColumn = Column,
 						Previous = _visibility,
-						New = value 
+						New = value
 					};
 					VisibilityChanged(eventArgs);
 					_visibility = value;
@@ -227,18 +233,10 @@ namespace Calculator712
 			}
 			internal class ContentChangedArgs
 			{
-				internal ContentChangedArgs(int cellRow, int cellColumn, UIElement previousContent, UIElement newContent)
-				{
-					CellRow = cellRow;
-					CellColumn = cellColumn;
-					PreviousContent = previousContent;
-					NewContent = newContent;
-				}
-
-				internal int CellRow { get; }
-				internal int CellColumn { get; }
-				internal UIElement PreviousContent { get; }
-				internal UIElement NewContent { get; }
+				internal int CellRow { get; init; }
+				internal int CellColumn { get; init; }
+				internal UIElement PreviousContent { get; init; }
+				internal UIElement NewContent { get; init; }
 			}
 		}
 		internal class CellsEnumerable : IEnumerable<Cell>
