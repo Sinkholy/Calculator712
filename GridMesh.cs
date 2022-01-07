@@ -66,6 +66,7 @@ namespace Calculator712
 					var cell = new Cell(currentRowIndex, i);
 					cell.ContentChanged += OnCellContentChanged;
 					cell.ContentCleared += OnCellContentCleared;
+					cell.VisibilityChanged += OnCellVisibilityChanged;
 					result.Add(cell);
 				}
 				return result;
@@ -122,6 +123,11 @@ namespace Calculator712
 		{
 			grid.Children.Remove(args.PreviousContent);
 		}
+		void OnCellVisibilityChanged(Cell.VisibilityChangedArgs args)
+		{
+			var cell = Pick(args.CellRow, args.CellColumn);
+			cell.Content.Visibility = args.New;
+		}
 		internal void SwapPositions(Cell a, Cell b)
 		{
 			int aOriginalRow = a.Row;
@@ -150,11 +156,11 @@ namespace Calculator712
 			}
 		}
 
-
 		internal class Cell
 		{
 			internal Action<ContentChangedArgs> ContentChanged = delegate { };
 			internal Action<ContentChangedArgs> ContentCleared = delegate { };
+			internal Action<VisibilityChangedArgs> VisibilityChanged = delegate { };
 
 			internal Cell(int row, int column)
 			{
@@ -189,12 +195,36 @@ namespace Calculator712
 					}
 				}
 			}
+			Visibility _visibility;
+			internal Visibility Visibility
+			{
+				get => _visibility;
+				set
+				{
+					var eventArgs = new VisibilityChangedArgs 
+					{ 
+						CellRow = Row, 
+						CellColumn = Column, 
+						Previous = _visibility,
+						New = value 
+					};
+					VisibilityChanged(eventArgs);
+					_visibility = value;
+				}
+			}
 
 			internal void ClearContent()
 			{
 				Content = null;
 			}
 
+			internal class VisibilityChangedArgs
+			{
+				internal int CellRow { get; init; }
+				internal int CellColumn { get; init; }
+				internal Visibility Previous { get; init; }
+				internal Visibility New { get; init; }
+			}
 			internal class ContentChangedArgs
 			{
 				internal ContentChangedArgs(int cellRow, int cellColumn, UIElement previousContent, UIElement newContent)
