@@ -267,6 +267,12 @@ namespace Calculator712
 				this.rows = rows;
 			}
 
+			internal int Count => rows.Count == 0 ? 0 : rows.Count * rows[0].Count;
+			internal bool ContainsEmptyCells => Empty.Any();
+			internal int EmptyCount => Empty.Count();
+			internal IEnumerable<Cell> Empty => this.Where(cell => !cell.Filled);
+			internal IEnumerable<Cell> Filled => this.Where(cell => cell.Filled);
+
 			public IEnumerator<Cell> GetEnumerator()
 			{
 				return new CellEnumerator(this);
