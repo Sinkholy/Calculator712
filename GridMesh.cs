@@ -103,8 +103,7 @@ namespace Calculator712
 		{
 			grid.Children.Remove(args.PreviousContent);
 			grid.Children.Add(args.NewContent);
-			Grid.SetRow(args.NewContent, args.CellRow);
-			Grid.SetColumn(args.NewContent, args.CellColumn);
+			AllignContentToGrid(args.NewContent, args.CellRow, args.CellColumn);
 		}
 		void OnCellContentCleared(Cell.ContentChangedArgs args)
 		{
@@ -126,8 +125,7 @@ namespace Calculator712
 		{
 			cell.Row = targetRow;
 			cell.Column = targetColumn;
-			Grid.SetRow(cell.Content, targetRow);
-			Grid.SetColumn(cell.Content, targetColumn);
+			AllignContentToGrid(cell.Content, targetRow, targetColumn);
 			RemoveCellFromOriginalPosition();
 			AddCellToNewLocation();
 
@@ -139,6 +137,11 @@ namespace Calculator712
 			{
 				rows[targetRow][targetColumn] = cell;
 			}
+		}
+		void AllignContentToGrid(UIElement content, int row, int column)
+		{
+			Grid.SetRow(content, row);
+			Grid.SetColumn(content, column);
 		}
 
 		internal class Cell
