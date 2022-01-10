@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Collections;
 using System.Windows;
 using System.Windows.Controls;
+using System.Linq;
 
 namespace Calculator712
 {
@@ -10,7 +11,6 @@ namespace Calculator712
 	{
 		readonly Grid grid;
 		readonly List<List<Cell>> rows;
-		readonly List<List<Cell>> columns;
 		readonly CellsEnumerable cells;
 
 		internal static GridMesh AssignTo(Grid grid)
@@ -21,49 +21,39 @@ namespace Calculator712
 		{
 			this.grid = grid;
 			rows = new List<List<Cell>>();
-			columns = new List<List<Cell>>();
-			cells = new CellsEnumerable(rows, columns);
+			cells = new CellsEnumerable(rows);
 		}
 
 		internal int RowsCount => rows.Count;
-		internal int ColumnsCount => columns.Count;
-		internal int CellsCount => rows.Count * columns.Count;
+		internal int ColumnsCount => rows.Count == 0 ? 0 : rows[0].Count;
+		internal int CellsCount => rows.Count * rows[0].Count;
 		internal CellsEnumerable Cells => cells;
 
-		internal List<Cell> GetRow(int index)
+		internal IEnumerable<Cell> GetRow(int index)
 		{
 			return rows[index];
 		}
-		internal List<Cell> GetColumn(int index)
-		{
-			return columns[index];
-		}
+		internal IEnumerable<Cell> GetColumn(int index) 
+			=> rows.Select(row => row.ElementAt(index));
 		internal Cell Pick(int row, int column)
 		{
 			return rows[row][column];
 		}
 		internal void AddRow()
 		{
-			var row = new List<Cell>(columns.Count);
-			int currentRowIndex = rows.Count;
+			var row = new List<Cell>(ColumnsCount);
 			var cells = CreateCells();
 			row.AddRange(cells);
 			rows.Add(row);
 			var rowDef = new RowDefinition();
 			grid.RowDefinitions.Add(rowDef);
 
-			for (int i = 0; i < columns.Count; i++)
-			{
-				var column = columns[i];
-				column.Add(cells[i]);
-			}
-
 			List<Cell> CreateCells()
 			{
-				var result = new List<Cell>(columns.Count);
-				for (int i = 0; i < columns.Count; i++)
+				var result = new List<Cell>(ColumnsCount);
+				for (int i = 0; i < ColumnsCount; i++)
 				{
-					var cell = new Cell(currentRowIndex, i);
+					var cell = new Cell(rows.Count, i);
 					cell.ContentChanged += OnCellContentChanged;
 					cell.ContentCleared += OnCellContentCleared;
 					cell.VisibilityChanged += OnCellVisibilityChanged;
@@ -74,27 +64,25 @@ namespace Calculator712
 		}
 		internal void AddColumn()
 		{
-			var column = new List<Cell>(rows.Count);
-			int currentColumnIndex = columns.Count;
+			var col = new ColumnDefinition();
+			grid.ColumnDefinitions.Add(col);
 			var cells = CreateCells();
-			column.AddRange(cells);
-			columns.Add(column);
-			var columnDef = new ColumnDefinition();
-			this.grid.ColumnDefinitions.Add(columnDef);
-			for (int i = 0; i < rows.Count; i++)
+			for (int i = 0; i < RowsCount; i++)
 			{
 				var row = rows[i];
-				row.Add(cells[i]);
+				var cell = cells[i];
+				row.Add(cell);
 			}
 
 			List<Cell> CreateCells()
 			{
-				var result = new List<Cell>(rows.Count);
-				for (int i = 0; i < rows.Count; i++)
+				var result = new List<Cell>(RowsCount);
+				for (int i = 0; i < RowsCount; i++)
 				{
-					var cell = new Cell(i, currentColumnIndex);
+					var cell = new Cell(i, ColumnsCount);
 					cell.ContentChanged += OnCellContentChanged;
 					cell.ContentCleared += OnCellContentCleared;
+					cell.VisibilityChanged += OnCellVisibilityChanged;
 					result.Add(cell);
 				}
 				return result;
@@ -147,12 +135,10 @@ namespace Calculator712
 			void RemoveCellFromOriginalPosition()
 			{
 				rows[cell.Row][cell.Column] = null;
-				columns[cell.Column][cell.Row] = null;
 			}
 			void AddCellToNewLocation()
 			{
 				rows[targetRow][targetColumn] = cell;
-				columns[targetColumn][targetRow] = cell;
 			}
 		}
 
@@ -242,12 +228,10 @@ namespace Calculator712
 		internal class CellsEnumerable : IEnumerable<Cell>
 		{
 			readonly List<List<Cell>> rows;
-			readonly List<List<Cell>> columns;
 
-			public CellsEnumerable(List<List<Cell>> rows, List<List<Cell>> columns)
+			public CellsEnumerable(List<List<Cell>> rows)
 			{
 				this.rows = rows;
-				this.columns = columns;
 			}
 
 			public IEnumerator<Cell> GetEnumerator()
@@ -276,7 +260,7 @@ namespace Calculator712
 				public Cell Current => cells.rows[currentRow][currentColumn];
 				object IEnumerator.Current => Current;
 				int RowsCount => cells.rows.Count;
-				int ColumnsCount => cells.columns.Count;
+				int ColumnsCount => cells.rows.Count == 0 ? 0 : cells.rows[0].Count;
 
 				public void Dispose() { }
 				public bool MoveNext()
