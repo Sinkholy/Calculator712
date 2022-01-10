@@ -337,7 +337,7 @@ namespace Calculator712.Calculator
 			public override void ApplyTo(GridMesh target, IButtonsProvider buttonsProvider)
 			{
 				UIElement[] buttons = CreateButtons(buttonsProvider);
-				target.Slice(4, 3);
+				target.SetSize(4, 3);
 				ApplyLayout(target, buttons);
 			}
 			UIElement[] CreateButtons(IButtonsProvider buttonsProvider)
@@ -439,7 +439,7 @@ namespace Calculator712.Calculator
 			}
 			void ApplyLayout()
 			{
-				mesh.Slice(4, 1);
+				mesh.SetSize(1, 1);
 			}
 
 			internal void AddOperation(string symbol)
