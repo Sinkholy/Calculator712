@@ -33,7 +33,7 @@ namespace Calculator712
 		{
 			return rows[index];
 		}
-		internal IEnumerable<Cell> GetColumn(int index) 
+		internal IEnumerable<Cell> GetColumn(int index)
 			=> rows.Select(row => row.ElementAt(index));
 		internal Cell Pick(int row, int column)
 		{
@@ -53,11 +53,7 @@ namespace Calculator712
 				var result = new List<Cell>(ColumnsCount);
 				for (int i = 0; i < ColumnsCount; i++)
 				{
-					var cell = new Cell(rows.Count, i);
-					cell.ContentChanged += OnCellContentChanged;
-					cell.ContentCleared += OnCellContentCleared;
-					cell.VisibilityChanged += OnCellVisibilityChanged;
-					result.Add(cell);
+					result.Add(CreateCell(rows.Count, i));
 				}
 				return result;
 			}
@@ -79,16 +75,19 @@ namespace Calculator712
 				var result = new List<Cell>(RowsCount);
 				for (int i = 0; i < RowsCount; i++)
 				{
-					var cell = new Cell(i, ColumnsCount);
-					cell.ContentChanged += OnCellContentChanged;
-					cell.ContentCleared += OnCellContentCleared;
-					cell.VisibilityChanged += OnCellVisibilityChanged;
-					result.Add(cell);
+					result.Add(CreateCell(i, ColumnsCount));
 				}
 				return result;
 			}
 		}
-
+		Cell CreateCell(int row, int column)
+		{
+			var cell = new Cell(row, column);
+			cell.ContentChanged += OnCellContentChanged;
+			cell.ContentCleared += OnCellContentCleared;
+			cell.VisibilityChanged += OnCellVisibilityChanged;
+			return cell;
+		}
 		internal void Slice(int rows, int columns)
 		{
 			for (int i = 0; i < rows; i++)
