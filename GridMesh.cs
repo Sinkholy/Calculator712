@@ -22,6 +22,7 @@ namespace Calculator712
 			this.grid = grid;
 			rows = new List<List<Cell>>();
 			cells = new CellsEnumerable(rows);
+			AdaptToExisingLayout();
 		}
 
 		internal int RowsCount => rows.Count;
@@ -41,27 +42,16 @@ namespace Calculator712
 		}
 		internal void AddRow()
 		{
-			var row = new List<Cell>(ColumnsCount);
-			var cells = CreateCells();
-			row.AddRange(cells);
-			rows.Add(row);
-			var rowDef = new RowDefinition();
-			grid.RowDefinitions.Add(rowDef);
-
-			List<Cell> CreateCells()
-			{
-				var result = new List<Cell>(ColumnsCount);
-				for (int i = 0; i < ColumnsCount; i++)
-				{
-					result.Add(CreateCell(rows.Count, i));
-				}
-				return result;
-			}
+			AddRowToGrid();
+			AddVirtualRow();
 		}
 		internal void AddColumn()
 		{
-			var col = new ColumnDefinition();
-			grid.ColumnDefinitions.Add(col);
+			AddColumnToGrid();
+			AddVirtualColumn();
+		}
+		void AddVirtualColumn()
+		{
 			var cells = CreateCells();
 			for (int i = 0; i < RowsCount; i++)
 			{
@@ -80,6 +70,23 @@ namespace Calculator712
 				return result;
 			}
 		}
+		void AddVirtualRow()
+		{
+			var row = new List<Cell>(ColumnsCount);
+			var cells = CreateCells();
+			row.AddRange(cells);
+			rows.Add(row);
+
+			List<Cell> CreateCells()
+			{
+				var result = new List<Cell>(ColumnsCount);
+				for (int i = 0; i < ColumnsCount; i++)
+				{
+					result.Add(CreateCell(rows.Count, i));
+				}
+				return result;
+			}
+		}
 		Cell CreateCell(int row, int column)
 		{
 			var cell = new Cell(row, column);
@@ -88,15 +95,37 @@ namespace Calculator712
 			cell.VisibilityChanged += OnCellVisibilityChanged;
 			return cell;
 		}
-		internal void Slice(int rows, int columns)
+		void AddRowToGrid()
 		{
-			for (int i = 0; i < rows; i++)
+			grid.RowDefinitions.Add(new RowDefinition());
+		}
+		void AddColumnToGrid()
+		{
+			grid.ColumnDefinitions.Add(new ColumnDefinition());
+		}
+		internal void SetSize(int rows, int columns) // TODO: возможна ли передача нулей?
+		{
+			for (int i = RowsCount; i < rows; i++)
 			{
 				AddRow();
 			}
-			for (int i = 0; i < columns; i++)
+			for (int i = ColumnsCount; i < columns; i++)
 			{
 				AddColumn();
+			}
+		}
+		void AdaptToExisingLayout()
+		{
+			var targetColumnsCount = grid.ColumnDefinitions.Count;
+			var targetRowsCount = grid.RowDefinitions.Count;
+
+			for (int i = RowsCount; i < targetRowsCount; i++)
+			{
+				AddVirtualRow();
+			}
+			for (int i = ColumnsCount; i < targetColumnsCount; i++)
+			{
+				AddVirtualColumn();
 			}
 		}
 		void OnCellContentChanged(Cell.ContentChangedArgs args)
