@@ -29,7 +29,9 @@ namespace Calculator712
 		internal int ColumnsCount => rows.Count == 0 ? 0 : rows[0].Count;
 		internal int CellsCount => rows.Count * rows[0].Count;
 		internal CellsEnumerable Cells => cells;
-
+		internal IEnumerable<IEnumerable<Cell>> Rows => rows;
+		internal IEnumerable<IEnumerable<Cell>> Columns
+			=> Rows.Select((_, i) => Rows.Select(row => row.ElementAt(i)));
 		internal IEnumerable<Cell> GetRow(int index)
 		{
 			return rows[index];
