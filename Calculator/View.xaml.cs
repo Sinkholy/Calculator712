@@ -427,8 +427,7 @@ namespace Calculator712.Calculator
 		}
 		class OperationButtonsPanel : Grid
 		{
-			GridMesh mesh;
-			int currentOp = 0;
+			readonly GridMesh mesh;
 
 			internal Action<string> ButtonPressed = delegate { };
 
@@ -444,10 +443,30 @@ namespace Calculator712.Calculator
 
 			internal void AddOperation(string symbol)
 			{
-				var button = new Button() { Content = symbol };
-				button.Click += ButtonClickHandler;
-				var cell = mesh.Pick(currentOp++, 0);
-				cell.Content = button;
+				if (!mesh.Cells.ContainsEmptyCells)
+				{
+					ExtendGrid();
+				}
+				var emptyCell = mesh.Cells.Empty.First();
+				emptyCell.Content = CreateButton();
+
+				void ExtendGrid()
+				{
+					if (mesh.ColumnsCount < mesh.RowsCount)
+					{
+						mesh.AddColumn();
+					}
+					else
+					{
+						mesh.AddRow();
+					}
+				}
+				Button CreateButton()
+				{
+					var button = new Button() { Content = symbol };
+					button.Click += ButtonClickHandler;
+					return button;
+				}
 			}
 
 			void ButtonClickHandler(object sender, RoutedEventArgs args)
