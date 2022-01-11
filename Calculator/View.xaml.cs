@@ -22,13 +22,11 @@ namespace Calculator712.Calculator
 	/// </summary>
 	public partial class View : Window
 	{
-		const string CalculationButtonSymbol = "=";
-		const string BackspaceButtonSymbol = "<-";
-
 		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
 		Input input;
 		HistoryBox history;
+		UtilityPanel utilities;
 
 		public Action<CalculationData> CalculationRequested = delegate { };
 
@@ -51,6 +49,13 @@ namespace Calculator712.Calculator
 
 			history = new HistoryBox();
 			HistoryGrid.Children.Add(history.View);
+
+			utilities = new UtilityPanel();
+			utilities.BackspaceButtonClicked += BackspaceButtonClickHandler;
+			utilities.ClearButtonClicked += ClearButtonClickHandler;
+			utilities.CalculateButtonClicked += CalculationButtonClickHandler;
+			ButtonsGrid.Children.Add(utilities);
+			Grid.SetColumn(utilities, 3);
 		}
 
 		public void AddOperation(ICalculatorOperation operation)
@@ -58,7 +63,7 @@ namespace Calculator712.Calculator
 			operationsPanel.AddOperation(operation.Symbol);
 		}
 
-		void CalculationButtonClickHandler(object sender, RoutedEventArgs args)
+		void CalculationButtonClickHandler()
 		{
 			if (input.ComputationReadyToProcess)
 			{
@@ -67,9 +72,13 @@ namespace Calculator712.Calculator
 				CalculationRequested(calculationData);
 			}
 		}
-		void BackspaceButtonClickHandler(object sender, RoutedEventArgs args)
+		void BackspaceButtonClickHandler()
 		{
-			//ResultTextBox.Text = "";
+			input.Clear();
+		}
+		void ClearButtonClickHandler()
+		{
+			history.Clear();
 		}
 		void NumericButtonClickHandler(int value)
 		{
@@ -298,6 +307,81 @@ namespace Calculator712.Calculator
 				internal IReadOnlyCollection<ComputationData> GetFullArchive()
 				{
 					return computations;
+				}
+			}
+		}
+		class UtilityPanel : Grid
+		{
+			const string CalculationButtonSymbol = "=";
+			const string BackspaceButtonSymbol = "<-";
+			const string ClearButtonSymbol = "Clear";
+
+			readonly GridMesh mesh;
+
+			internal UtilityPanel()
+			{
+				mesh = GridMesh.AssignTo(this);
+				mesh.SetSize(1, 1);
+				Setup();
+			}
+
+			internal Action BackspaceButtonClicked = delegate { };
+			internal Action ClearButtonClicked = delegate { };
+			internal Action CalculateButtonClicked = delegate { };
+
+			void Setup()
+			{
+				SetBackspaceButton();
+				SetCalculateButton();
+				SetClearButton();
+
+				void SetBackspaceButton()
+				{
+					var button = new Button()
+					{
+						Content = BackspaceButtonSymbol
+					};
+					button.Click += (_, _) => BackspaceButtonClicked();
+
+					var cell = GetNextEmptyCell();
+					cell.Content = button;
+				}
+				void SetCalculateButton()
+				{
+					var button = new Button()
+					{
+						Content = CalculationButtonSymbol
+					};
+					button.Click += (_, _) => CalculateButtonClicked();
+
+					var cell = GetNextEmptyCell();
+					cell.Content = button;
+				}
+				void SetClearButton()
+				{
+					var button = new Button()
+					{
+						Content = ClearButtonSymbol
+					};
+					button.Click += (_, _) => ClearButtonClicked();
+
+					var cell = GetNextEmptyCell();
+					cell.Content = button;
+				}
+				GridMesh.Cell GetNextEmptyCell()
+				{
+					if (!mesh.Cells.ContainsEmptyCells)
+					{
+						if(mesh.ColumnsCount > mesh.RowsCount)
+						{
+							mesh.AddRow();
+						}
+						else
+						{
+							mesh.AddColumn();
+						}
+					}
+					return mesh.Cells.Empty.First();
 				}
 			}
 		}

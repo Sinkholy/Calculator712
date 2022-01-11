@@ -15,8 +15,6 @@
 				<ColumnDefinition Name="OperationsColumn"/>
 				<ColumnDefinition Name="SystemOperationsColumn"/>
 			</Grid.ColumnDefinitions>
-			<Button Content="=" HorizontalAlignment="Left" Margin="59,75,0,0" VerticalAlignment="Top" Height="60" Width="114" Grid.Column="2" Click="CalculationButtonClickHandler"/>
-			<Button Content="&lt;-" HorizontalAlignment="Left" Margin="59,10,0,0" VerticalAlignment="Top" Height="60" Width="114" Grid.Column="2" Click="BackspaceButtonClickHandler"/>
 		</Grid>
 	</Grid>
 </Window>
