@@ -365,7 +365,7 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class UtilityPanel : Grid
+		class UtilityPanel
 		{
 			const string CalculationButtonSymbol = "=";
 			const string BackspaceButtonSymbol = "<-";
@@ -373,9 +373,14 @@ namespace Calculator712.Calculator
 
 			readonly GridMesh mesh;
 
+			public static implicit operator UIElement(UtilityPanel panel)
+			{
+				return panel.mesh;
+			}
+
 			internal UtilityPanel()
 			{
-				mesh = GridMesh.AssignTo(this);
+				mesh = new GridMesh();
 				mesh.SetSize(1, 1);
 				Setup();
 			}
@@ -507,15 +512,20 @@ namespace Calculator712.Calculator
 				throw new NotImplementedException();
 			}
 		}
-		class NumericButtonsPanel : Grid
+		class NumericButtonsPanel
 		{
 			GridMesh mesh;
+
+			public static implicit operator UIElement(NumericButtonsPanel panel)
+			{
+				return panel.mesh;
+			}
 
 			internal Action<int> ButtonPressed = delegate { };
 
 			internal NumericButtonsPanel(NumericPanelLayout layout)
 			{
-				mesh = GridMesh.AssignTo(this);
+				mesh = new GridMesh();
 				var provider = new NumericButtonProvider(ButtonClickHandler);
 				layout.ApplyTo(mesh, provider);
 			}
@@ -564,15 +574,20 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class OperationButtonsPanel : Grid
+		class OperationButtonsPanel
 		{
 			readonly GridMesh mesh;
+
+			public static implicit operator UIElement(OperationButtonsPanel panel)
+			{
+				return panel.mesh;
+			}
 
 			internal Action<string> ButtonPressed = delegate { };
 
 			public OperationButtonsPanel()
 			{
-				mesh = GridMesh.AssignTo(this);
+				mesh = new GridMesh();
 				ApplyLayout();
 			}
 			void ApplyLayout()
