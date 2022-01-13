@@ -13,6 +13,11 @@ namespace Calculator712
 		readonly List<List<Cell>> rows;
 		readonly CellsEnumerable cells;
 
+		public static implicit operator Grid(GridMesh mesh)
+		{
+			return mesh.grid;
+		}
+
 		internal static GridMesh AssignTo(Grid grid)
 		{
 			return new GridMesh(grid);
