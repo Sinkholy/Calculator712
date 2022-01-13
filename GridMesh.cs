@@ -29,6 +29,12 @@ namespace Calculator712
 			cells = new CellsEnumerable(rows);
 			AdaptToExisingLayout();
 		}
+		internal GridMesh()
+		{
+			grid = new Grid();
+			rows = new List<List<Cell>>();
+			cells = new CellsEnumerable(rows);
+		}
 
 		internal int RowsCount => rows.Count;
 		internal int ColumnsCount => rows.Count == 0 ? 0 : rows[0].Count;
