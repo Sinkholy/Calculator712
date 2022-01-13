@@ -22,9 +22,7 @@ namespace Calculator712.Calculator
 	/// </summary>
 	public partial class View : Window
 	{
-		GridMesh mainMesh;
-		GridMesh controlMesh;
-		GridMesh outputMesh;
+		readonly GridMesh mainMesh;
 
 		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
@@ -38,40 +36,81 @@ namespace Calculator712.Calculator
 		{
 			InitializeComponent();
 
-			mainMesh = GridMesh.AssignTo(MainGrid);
-			mainMesh.SetSize(2, 1);
+			mainMesh = CreateMainMesh();
+			var controlMesh = CreateContolsPanels();
+			var outputMesh = CreateOutputPanels();
+			AlignPanels();
 
-			var controlGrid = new Grid();
-			controlMesh = GridMesh.AssignTo(controlGrid);
-			controlMesh.SetSize(1, 3);
+			GridMesh CreateMainMesh()
+			{
+				var mesh = GridMesh.AssignTo(MainGrid);
+				mesh.SetSize(2, 1);
+				return mesh;
+			}
+			GridMesh CreateContolsPanels()
+			{
+				var mesh = GridMesh.CreateWithSize(1, 3);
+				numericPanel = CreateNumericPanel();
+				operationsPanel = CreateperationsPanel();
+				utilities = CreateUtilitiesPanel();				
+				AlignPanels();
+				return mesh; 
 
-			var outputGrid = new Grid();
-			outputMesh = GridMesh.AssignTo(outputGrid);
-			outputMesh.SetSize(1, 2);
+				NumericButtonsPanel CreateNumericPanel()
+				{
+					var numericPanelLayout = new DefaultNumpadLayout();
+					var numericPanel = new NumericButtonsPanel(numericPanelLayout);
+					numericPanel.ButtonPressed += NumericButtonClickHandler;
+					return numericPanel;
+				}
+				OperationButtonsPanel CreateperationsPanel()
+				{
+					var operationsPanel = new OperationButtonsPanel();
+					operationsPanel.ButtonPressed += OperationButtonClickHandler;
+					return operationsPanel;					
+				}
+				UtilityPanel CreateUtilitiesPanel()
+				{
+					var utilitiesPanel = new UtilityPanel();
+					utilitiesPanel.BackspaceButtonClicked += BackspaceButtonClickHandler;
+					utilitiesPanel.ClearButtonClicked += ClearButtonClickHandler;
+					utilitiesPanel.CalculateButtonClicked += CalculationButtonClickHandler;
+					return utilitiesPanel;
+				}
+				void AlignPanels()
+				{	
+					mesh.Pick(0, 0).Content = numericPanel;
+					mesh.Pick(0, 1).Content = operationsPanel;
+					mesh.Pick(0, 2).Content = utilities;
+				}
+			}
+			GridMesh CreateOutputPanels()
+			{
+				var mesh = GridMesh.CreateWithSize(1, 2);
+				input = CreateInputPanel();
+				history = CreateHistoryPanel();
+				AlignPanels();
+				return mesh;
 
-			mainMesh.Pick(0, 0).Content = controlGrid;
-			mainMesh.Pick(1, 0).Content = outputGrid;
-
-			var numericPanelLayout = new DefaultNumpadLayout();
-			numericPanel = new NumericButtonsPanel(numericPanelLayout);
-			numericPanel.ButtonPressed += NumericButtonClickHandler;
-			controlMesh.Pick(0, 0).Content = numericPanel;
-
-			operationsPanel = new OperationButtonsPanel();
-			operationsPanel.ButtonPressed += OperationButtonClickHandler;
-			controlMesh.Pick(0, 1).Content = operationsPanel;
-
-			utilities = new UtilityPanel();
-			utilities.BackspaceButtonClicked += BackspaceButtonClickHandler;
-			utilities.ClearButtonClicked += ClearButtonClickHandler;
-			utilities.CalculateButtonClicked += CalculationButtonClickHandler;
-			controlMesh.Pick(0, 2).Content = utilities;
-
-			input = new Input();
-			outputMesh.Pick(0, 1).Content = input.View;
-
-			history = new HistoryBox();
-			outputMesh.Pick(0, 0).Content = history.View;
+				Input CreateInputPanel()
+				{
+					return new Input();
+				}
+				HistoryBox CreateHistoryPanel()
+				{
+					return new HistoryBox();					
+				}
+				void AlignPanels()
+				{
+					mesh.Pick(0, 1).Content = input.View;
+					mesh.Pick(0, 0).Content = history.View;
+				}
+			}
+			void AlignPanels()
+			{
+				mainMesh.Pick(0, 0).Content = controlMesh;
+				mainMesh.Pick(1, 0).Content = outputMesh;
+			}
 		}
 
 		public void AddOperation(ICalculatorOperation operation)
