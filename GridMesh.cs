@@ -22,6 +22,10 @@ namespace Calculator712
 		{
 			return new GridMesh(grid);
 		}
+		internal static GridMesh CreateWithSize(int rows, int columns)
+		{
+			return new GridMesh(rows, columns);
+		}
 		internal GridMesh(Grid grid)
 		{
 			this.grid = grid;
@@ -34,6 +38,11 @@ namespace Calculator712
 			grid = new Grid();
 			rows = new List<List<Cell>>();
 			cells = new CellsEnumerable(rows);
+		}
+		internal GridMesh(int rows, int columns)
+			: base()
+		{
+			SetSize(rows, columns);
 		}
 
 		internal int RowsCount => rows.Count;
