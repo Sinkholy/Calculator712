@@ -40,7 +40,7 @@ namespace Calculator712
 			cells = new CellsEnumerable(rows);
 		}
 		internal GridMesh(int rows, int columns)
-			: base()
+			: this()
 		{
 			SetSize(rows, columns);
 		}
