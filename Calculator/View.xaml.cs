@@ -22,6 +22,10 @@ namespace Calculator712.Calculator
 	/// </summary>
 	public partial class View : Window
 	{
+		GridMesh mainMesh;
+		GridMesh controlMesh;
+		GridMesh outputMesh;
+
 		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
 		Input input;
@@ -33,29 +37,41 @@ namespace Calculator712.Calculator
 		public View()
 		{
 			InitializeComponent();
+
+			mainMesh = GridMesh.AssignTo(MainGrid);
+			mainMesh.SetSize(2, 1);
+
+			var controlGrid = new Grid();
+			controlMesh = GridMesh.AssignTo(controlGrid);
+			controlMesh.SetSize(1, 3);
+
+			var outputGrid = new Grid();
+			outputMesh = GridMesh.AssignTo(outputGrid);
+			outputMesh.SetSize(1, 2);
+
+			mainMesh.Pick(0, 0).Content = controlGrid;
+			mainMesh.Pick(1, 0).Content = outputGrid;
+
 			var numericPanelLayout = new DefaultNumpadLayout();
 			numericPanel = new NumericButtonsPanel(numericPanelLayout);
 			numericPanel.ButtonPressed += NumericButtonClickHandler;
-			ButtonsGrid.Children.Add(numericPanel);
-			Grid.SetColumn(numericPanel, 0);
+			controlMesh.Pick(0, 0).Content = numericPanel;
 
 			operationsPanel = new OperationButtonsPanel();
 			operationsPanel.ButtonPressed += OperationButtonClickHandler;
-			ButtonsGrid.Children.Add(operationsPanel);
-			Grid.SetColumn(operationsPanel, 1);
-
-			input = new Input();
-			InputGrid.Children.Add(input.View);
-
-			history = new HistoryBox();
-			HistoryGrid.Children.Add(history.View);
+			controlMesh.Pick(0, 1).Content = operationsPanel;
 
 			utilities = new UtilityPanel();
 			utilities.BackspaceButtonClicked += BackspaceButtonClickHandler;
 			utilities.ClearButtonClicked += ClearButtonClickHandler;
 			utilities.CalculateButtonClicked += CalculationButtonClickHandler;
-			ButtonsGrid.Children.Add(utilities);
-			Grid.SetColumn(utilities, 3);
+			controlMesh.Pick(0, 2).Content = utilities;
+
+			input = new Input();
+			outputMesh.Pick(0, 1).Content = input.View;
+
+			history = new HistoryBox();
+			outputMesh.Pick(0, 0).Content = history.View;
 		}
 
 		public void AddOperation(ICalculatorOperation operation)

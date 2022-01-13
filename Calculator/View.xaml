@@ -6,15 +6,5 @@
         xmlns:local="clr-namespace:Calculator712.Calculator"
         mc:Ignorable="d"
         Title="Window" Height="450" Width="549">
-	<Grid Name="MainGrid">
-		<Grid Background="AntiqueWhite" Name="HistoryGrid" Margin="0,230,275,0"/>
-		<Grid Background="AntiqueWhite" Name="InputGrid" Margin="274,230,1,0"/>
-		<Grid Background="AliceBlue" Margin="0,0,0,204" Name="ButtonsGrid">
-			<Grid.ColumnDefinitions>
-				<ColumnDefinition Name="NumpadColumn"/>
-				<ColumnDefinition Name="OperationsColumn"/>
-				<ColumnDefinition Name="SystemOperationsColumn"/>
-			</Grid.ColumnDefinitions>
-		</Grid>
-	</Grid>
+	<Grid Name="MainGrid"> </Grid>
 </Window>
