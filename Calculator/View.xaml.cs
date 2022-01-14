@@ -27,7 +27,7 @@ namespace Calculator712.Calculator
 		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
 		Input input;
-		HistoryBox history;
+		HistoryPanel history;
 		UtilityPanel utilities;
 
 		public Action<CalculationData> CalculationRequested = delegate { };
@@ -96,14 +96,14 @@ namespace Calculator712.Calculator
 				{
 					return new Input();
 				}
-				HistoryBox CreateHistoryPanel()
+				HistoryPanel CreateHistoryPanel()
 				{
-					return new HistoryBox();					
+					return new HistoryPanel();					
 				}
 				void AlignPanels()
 				{
 					mesh.Pick(0, 1).Content = input.View;
-					mesh.Pick(0, 0).Content = history.View;
+					mesh.Pick(0, 0).Content = history;
 				}
 			}
 			void AlignPanels()
@@ -285,19 +285,21 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class HistoryBox // TODO: нужно подумать над тем, как реализовать в этом классе UIElement
-						 // чтобы не делать матрёшку из вызовов View.
+		class HistoryPanel
 		{
 			readonly Archive archive;
-			readonly HistoryView view;
+			readonly View view;
 
-			internal HistoryBox()
+			public static implicit operator UIElement(HistoryPanel panel)
 			{
-				archive = new Archive();
-				view = new HistoryView();
+				return panel.view;
 			}
 
-			internal UIElement View => view.View; // TODO: ужасная матрёшка
+			internal HistoryPanel()
+			{
+				archive = new Archive();
+				view = new View();
+			}
 
 			internal IReadOnlyCollection<ComputationData> GetArchive()
 			{
@@ -314,16 +316,19 @@ namespace Calculator712.Calculator
 				view.Clear();
 			}
 
-			class HistoryView : UIElement
+			class View
 			{
 				readonly ListBox list;
 
-				internal HistoryView()
+				public static implicit operator UIElement(View view)
+				{
+					return view.list;
+				}
+
+				internal View()
 				{
 					list = new ListBox();
 				}
-
-				internal UIElement View => list;
 
 				internal void Add(string val)
 				{
