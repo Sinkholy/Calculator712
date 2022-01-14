@@ -26,7 +26,7 @@ namespace Calculator712.Calculator
 
 		OperationButtonsPanel operationsPanel;
 		NumericButtonsPanel numericPanel;
-		Input input;
+		InputPanel input;
 		HistoryPanel history;
 		UtilityPanel utilities;
 
@@ -92,17 +92,17 @@ namespace Calculator712.Calculator
 				AlignPanels();
 				return mesh;
 
-				Input CreateInputPanel()
+				InputPanel CreateInputPanel()
 				{
-					return new Input();
+					return new InputPanel();
 				}
 				HistoryPanel CreateHistoryPanel()
 				{
-					return new HistoryPanel();					
+					return new HistoryPanel();
 				}
 				void AlignPanels()
 				{
-					mesh.Pick(0, 1).Content = input.View;
+					mesh.Pick(0, 1).Content = input;
 					mesh.Pick(0, 0).Content = history;
 				}
 			}
@@ -170,18 +170,23 @@ namespace Calculator712.Calculator
 			public int RightOperand { get; }
 		}
 
-		class Input // TODO: читай HistoryBox, здесь то же самое.
+		class InputPanel
 		{
 			ComputationData computation;
 			List<int> input;
 			int firstOperandNumbersCount;
-			InputView view;
+			View view;
 
-			internal Input()
+			public static implicit operator UIElement(InputPanel panel)
+			{
+				return panel.view;
+			}
+
+			internal InputPanel()
 			{
 				computation = new ComputationData();
 				input = new List<int>();
-				view = new InputView();
+				view = new View();
 			}
 
 			internal bool ContainsLeftOperand => input.Count > 0;
@@ -197,7 +202,6 @@ namespace Calculator712.Calculator
 					return computation;
 				}
 			}
-			internal UIElement View => view.View;
 
 			internal void AddToCurrentOperand(int value)
 			{
@@ -251,19 +255,22 @@ namespace Calculator712.Calculator
 				}
 			}
 
-			class InputView
+			class View
 			{
 				const string SpacerSymbol = " "; // TODO: спейсеры и их логика должны быть здесь?
 
 				readonly TextBlock text;
 
-				public InputView()
+				public static implicit operator UIElement(View view)
+				{
+					return view.text;
+				}
+
+				public View()
 				{
 					text = new TextBlock();
 				}
-
-				internal UIElement View => text;
-
+				
 				internal void Append(string val, bool usingSpacers = true)
 				{
 					if (usingSpacers)
