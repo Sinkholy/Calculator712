@@ -32,7 +32,7 @@ namespace Calculator712.Calculator
 
 		public Action<CalculationData> CalculationRequested = delegate { };
 
-		public View()
+		public View(INumericButtonPanelLayout numericButtonsPanelLayout)
 		{
 			InitializeComponent();
 
@@ -58,8 +58,7 @@ namespace Calculator712.Calculator
 
 				NumericButtonsPanel CreateNumericPanel()
 				{
-					var numericPanelLayout = new DefaultNumpadLayout();
-					var numericPanel = new NumericButtonsPanel(numericPanelLayout);
+					var numericPanel = new NumericButtonsPanel(numericButtonsPanelLayout);
 					numericPanel.ButtonPressed += NumericButtonClickHandler;
 					return numericPanel;
 				}
@@ -473,59 +472,19 @@ namespace Calculator712.Calculator
 			}
 		}
 
-		internal abstract class MeshLayout
+		#region Layouts
+		public interface INumericButtonPanelLayout
 		{
-			public abstract void ApplyTo(GridMesh target);
-		}
-		internal abstract class NumericPanelLayout : MeshLayout
-		{
-			public abstract void ApplyTo(GridMesh target, IButtonsProvider buttonsProvider);
+			public int PanelColumnsCount { get; }
+			public int PanelRowsCount { get; }
 
-			public interface IButtonsProvider
-			{
-				UIElement GetButtonWithNumber(int num);
-			}
-		}
-		class DefaultNumpadLayout : NumericPanelLayout
-		{
-			const int ButtonsCount = 10;
-
-			public override void ApplyTo(GridMesh target, IButtonsProvider buttonsProvider)
-			{
-				UIElement[] buttons = CreateButtons(buttonsProvider);
-				target.SetSize(4, 3);
-				ApplyLayout(target, buttons);
-			}
-			UIElement[] CreateButtons(IButtonsProvider buttonsProvider)
-			{
-				UIElement[] result = new UIElement[ButtonsCount];
-				for (int i = 0; i < ButtonsCount; i++)
-				{
-					result[i] = buttonsProvider.GetButtonWithNumber(i);
-				}
-				return result;
-			}
-			void ApplyLayout(GridMesh target, UIElement[] buttons)
-			{
-				target.Pick(3, 1).Content = buttons[0];
-				target.Pick(0, 0).Content = buttons[1];
-				target.Pick(0, 1).Content = buttons[2];
-				target.Pick(0, 2).Content = buttons[3];
-				target.Pick(1, 0).Content = buttons[4];
-				target.Pick(1, 1).Content = buttons[5];
-				target.Pick(1, 2).Content = buttons[6];
-				target.Pick(2, 0).Content = buttons[7];
-				target.Pick(2, 1).Content = buttons[8];
-				target.Pick(2, 2).Content = buttons[9];
-			}
-
-			public override void ApplyTo(GridMesh target)
-			{
-				throw new NotImplementedException();
-			}
+			public int GetButtonColumn(int buttonNumber);
+			public int GetButtonRow(int buttonNumber);
 		}
 		class NumericButtonsPanel
 		{
+			const int ButtonsCount = 10;
+
 			GridMesh mesh;
 
 			public static implicit operator UIElement(NumericButtonsPanel panel)
@@ -535,11 +494,31 @@ namespace Calculator712.Calculator
 
 			internal Action<int> ButtonPressed = delegate { };
 
-			internal NumericButtonsPanel(NumericPanelLayout layout)
+			internal NumericButtonsPanel(INumericButtonPanelLayout layout)
 			{
-				mesh = new GridMesh();
-				var provider = new NumericButtonProvider(ButtonClickHandler);
-				layout.ApplyTo(mesh, provider);
+				mesh = GridMesh.CreateWithSize(layout.PanelRowsCount, layout.PanelColumnsCount);
+				var buttons = CreateButtons();
+				ApplyLayout();
+
+				NumericButton[] CreateButtons()
+				{
+					var result = new NumericButton[ButtonsCount];
+					for (int i = 0; i < ButtonsCount; i++)
+					{
+						result[i] = NumericButton.CreateWithNumber(i);
+						result[i].Click += ButtonClickHandler;
+					}
+					return result;
+				}
+				void ApplyLayout()
+				{
+					foreach (var button in buttons)
+					{
+						var buttonRow = layout.GetButtonRow(button.Value);
+						var buttonColumn = layout.GetButtonColumn(button.Value);
+						mesh.Pick(buttonRow, buttonColumn).Content = button;
+					}
+				}
 			}
 
 			void ButtonClickHandler(object sender, RoutedEventArgs args)
@@ -547,26 +526,9 @@ namespace Calculator712.Calculator
 				var button = sender as NumericButton;
 				ButtonPressed(button.Value);
 			}
-
-			class NumericButtonProvider : NumericPanelLayout.IButtonsProvider
-			{
-				Action<object, RoutedEventArgs> callback;
-
-				public NumericButtonProvider(Action<object, RoutedEventArgs> buttonClickCallback)
-				{
-					callback = buttonClickCallback;
-				}
-
-				public UIElement GetButtonWithNumber(int num)
-				{
-					var button = NumericButton.WithNumber(num);
-					button.Click += (o, e) => callback(o, e);
-					return button;
-				}
-			}
 			class NumericButton : Button
 			{
-				internal static NumericButton WithNumber(int num)
+				internal static NumericButton CreateWithNumber(int num)
 				{
 					return new NumericButton()
 					{
@@ -642,5 +604,6 @@ namespace Calculator712.Calculator
 				ButtonPressed(operation); // TODO: possible NRE?
 			}
 		}
+		#endregion
 	}
 }
