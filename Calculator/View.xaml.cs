@@ -169,6 +169,7 @@ namespace Calculator712.Calculator
 			public int RightOperand { get; }
 		}
 
+		#region Panels
 		class InputPanel
 		{
 			ComputationData computation;
@@ -471,16 +472,6 @@ namespace Calculator712.Calculator
 				return $"{LeftOperand}{Spacer}{Symbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
 			}
 		}
-
-		#region Layouts
-		public interface INumericButtonPanelLayout
-		{
-			public int PanelColumnsCount { get; }
-			public int PanelRowsCount { get; }
-
-			public int GetButtonColumn(int buttonNumber);
-			public int GetButtonRow(int buttonNumber);
-		}
 		class NumericButtonsPanel
 		{
 			const int ButtonsCount = 10;
@@ -603,6 +594,16 @@ namespace Calculator712.Calculator
 				var operation = button.Content as string;
 				ButtonPressed(operation); // TODO: possible NRE?
 			}
+		}
+		#endregion
+		#region Layouts
+		public interface INumericButtonPanelLayout
+		{
+			public int PanelColumnsCount { get; }
+			public int PanelRowsCount { get; }
+
+			public int GetButtonColumn(int buttonNumber);
+			public int GetButtonRow(int buttonNumber);
 		}
 		#endregion
 	}
