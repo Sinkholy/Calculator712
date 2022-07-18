@@ -165,7 +165,7 @@ namespace Calculator712
 			var cell = Pick(args.CellRow, args.CellColumn);
 			cell.Content.Visibility = args.New;
 		}
-		internal void SwapPositions(Cell a, Cell b)
+		internal void SwapCells(Cell a, Cell b)
 		{
 			int aOriginalRow = a.Row;
 			int aOriginalColumn = a.Column;
