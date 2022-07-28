@@ -56,7 +56,7 @@ namespace Calculator712
 									 : rows[0].Count;
 		internal int CellsCount => IsEmpty 
 								   ? 0 
-								   : rows.Count * rows[0].Count;
+								   : RowsCount * ColumnsCount;
 		internal CellsEnumerable Cells => cells;
 		internal IEnumerable<IEnumerable<Cell>> Rows => rows;
 		internal IEnumerable<IEnumerable<Cell>> Columns
