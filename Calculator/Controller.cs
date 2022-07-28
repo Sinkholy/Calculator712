@@ -17,17 +17,10 @@ namespace Calculator712.Calculator
 		public Controller(ICalculatorOperation[] operations)
 		{
 			Operations = operations;
-			View = new View();
-		}
-
-		public void Start()
-		{
-			foreach (var operation in Operations)
-			{
-				View.AddOperation(operation);
-			}
+			View = new View(null, Operations.Select(x => x.Symbol).ToArray());
 			View.CalculationRequested += OnCalculationRequested;
 		}
+
 		void OnCalculationRequested(CalculationData data)
 		{
 			var targetOperation = GetOperationBySymbol(data.OperationSymbol);

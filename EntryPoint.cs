@@ -29,7 +29,6 @@ namespace Calculator712
 		{
 			var defaultOperations = CreateDefaultOperations();
 			var calculator = new Controller(defaultOperations);
-			calculator.Start();
 			Run(calculator.View);
 		}
 		ICalculatorOperation[] CreateDefaultOperations()

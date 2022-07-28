@@ -32,7 +32,7 @@ namespace Calculator712.Calculator
 
 		public Action<CalculationData> CalculationRequested = delegate { };
 
-		public View(INumericButtonPanelLayout numericButtonsPanelLayout)
+		public View(INumericButtonPanelLayout numericButtonsPanelLayout, string[] operationsSymbols)
 		{
 			InitializeComponent();
 
@@ -64,7 +64,7 @@ namespace Calculator712.Calculator
 				}
 				OperationButtonsPanel CreateperationsPanel()
 				{
-					var operationsPanel = new OperationButtonsPanel();
+					var operationsPanel = new OperationButtonsPanel(operationsSymbols);
 					operationsPanel.ButtonPressed += OperationButtonClickHandler;
 					return operationsPanel;					
 				}
@@ -110,11 +110,6 @@ namespace Calculator712.Calculator
 				mainMesh.Pick(0, 0).Content = controlMesh;
 				mainMesh.Pick(1, 0).Content = outputMesh;
 			}
-		}
-
-		public void AddOperation(ICalculatorOperation operation)
-		{
-			operationsPanel.AddOperation(operation.Symbol);
 		}
 
 		void CalculationButtonClickHandler()
@@ -550,9 +545,13 @@ namespace Calculator712.Calculator
 
 			internal Action<string> ButtonPressed = delegate { };
 
-			public OperationButtonsPanel()
+			public OperationButtonsPanel(string[] operations)
 			{
 				mesh = new GridMesh();
+				foreach (var operation in operations)
+				{
+					AddOperation(operation);
+				}
 				ApplyLayout();
 			}
 			void ApplyLayout()
