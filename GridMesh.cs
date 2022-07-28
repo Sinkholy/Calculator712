@@ -7,7 +7,9 @@ using System.Linq;
 
 namespace Calculator712
 {
-	class GridMesh
+	class GridMesh // TODO: как мне показалось здесь много потенциальных мест для появления ошибок
+					// это касается методов-выборок и каунтеров т.к. во многих из них идёт обращение к
+					// свойству Count первого элемента массива рядов, а он может оказаться null.
 	{
 		readonly Grid grid;
 		readonly List<List<Cell>> rows;
@@ -45,22 +47,38 @@ namespace Calculator712
 			SetSize(rows, columns);
 		}
 
+		internal bool IsEmpty => RowsCount == 0; // TODO: мне не нравится нейминг.
+												// Это свойство говорит о том, что ячеек просто не существует
+												// а не о том, что есть ячейки, но они пустые.
 		internal int RowsCount => rows.Count;
-		internal int ColumnsCount => rows.Count == 0 ? 0 : rows[0].Count;
-		internal int CellsCount => rows.Count * rows[0].Count;
+		internal int ColumnsCount => IsEmpty
+									 ? 0 
+									 : rows[0].Count;
+		internal int CellsCount => IsEmpty 
+								   ? 0 
+								   : rows.Count * rows[0].Count;
 		internal CellsEnumerable Cells => cells;
 		internal IEnumerable<IEnumerable<Cell>> Rows => rows;
 		internal IEnumerable<IEnumerable<Cell>> Columns
 			=> Rows.Select((_, i) => Rows.Select(row => row.ElementAt(i)));
 		internal IEnumerable<Cell> GetRow(int index)
 		{
-			return rows[index];
+			return index >= RowsCount
+						? Enumerable.Empty<Cell>()
+						: rows[index];
 		}
 		internal IEnumerable<Cell> GetColumn(int index)
 			=> rows.Select(row => row.ElementAt(index));
-		internal Cell Pick(int row, int column)
+		internal Cell? Pick(int row, int column)
 		{
-			return rows[row][column];
+			return IsOutOfRange() 
+				? null 
+				: rows[row][column];
+
+			bool IsOutOfRange()
+			{
+				return row >= RowsCount || column >= ColumnsCount;
+			}
 		}
 		internal void AddRow()
 		{
