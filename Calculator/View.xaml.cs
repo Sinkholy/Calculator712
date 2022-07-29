@@ -39,30 +39,24 @@ namespace Calculator712.Calculator
 			InitializeComponent();
 
 			mainMesh = GridMesh.AssignTo(MainGrid);
-			CreateNumericPanel();
-			CreateOperationsPanel();
-			CreateUtilitiesPanel();
-			input = new InputPanel();
-			history = new HistoryPanel();
-
+			CreatePanels();
 			Layout = layout;
 
-			void CreateNumericPanel()
+			void CreatePanels()
 			{
 				numericPanel = new NumericButtonsPanel();
 				numericPanel.ButtonPressed += NumericButtonClickHandler;
-			}
-			void CreateOperationsPanel()
-			{
+
 				operationsPanel = new OperationButtonsPanel(operationsSymbols);
 				operationsPanel.ButtonPressed += OperationButtonClickHandler;
-			}
-			void CreateUtilitiesPanel()
-			{
+
 				utilities = new UtilityPanel();
 				utilities.BackspaceButtonClicked += BackspaceButtonClickHandler;
 				utilities.ClearButtonClicked += ClearButtonClickHandler;
 				utilities.CalculateButtonClicked += CalculationButtonClickHandler;
+
+				input = new InputPanel();
+				history = new HistoryPanel();
 			}
 		}
 		#region Layout handling
