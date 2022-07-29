@@ -4,6 +4,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using System.Windows;
+using System.Xml.Linq;
 
 using static Calculator712.Calculator.View;
 
@@ -12,13 +13,17 @@ namespace Calculator712.Calculator
 	public class Controller
 	{
 		public View View { get; }
+		public XDocument Layout { get; set; }
 		ICalculatorOperation[] Operations { get; }
 
-		public Controller(ICalculatorOperation[] operations)
+		public Action<XDocument> LayoutSaveRequested = delegate { };
+
+		public Controller(ICalculatorOperation[] operations, XDocument layout)
 		{
 			Operations = operations;
-			View = new View(null, Operations.Select(x => x.Symbol).ToArray());
+			View = new View(layout, Operations.Select(x => x.Symbol).ToArray());
 			View.CalculationRequested += OnCalculationRequested;
+			View.LayoutSaveRequested += layout => LayoutSaveRequested(layout);
 		}
 
 		void OnCalculationRequested(CalculationData data)
