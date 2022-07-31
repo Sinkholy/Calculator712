@@ -191,6 +191,88 @@ namespace Calculator712.Calculator
 			public void ApplyLayout(XElement layoutSerialized);
 			public XElement ExtractLayout();
 		}
+		abstract class GridMeshPanel : IPanel
+		{
+			abstract public string Name { get; }
+			public bool PositionLocked { get; set; }
+			public IPanel.PanelPosition Position { get; set; }
+			public UIElement UIElement => Mesh;
+			protected GridMesh Mesh { get; private init; }
+
+			internal GridMeshPanel()
+			{
+				Mesh = new GridMesh();
+			}
+		}
+		abstract class GridMeshLayoutablePanel : GridMeshPanel, ILayoutablePanel
+		{
+			public virtual XElement ExtractLayout()
+			{
+				var sizeElem = new XElement("size",
+							new XElement("columns", Mesh.ColumnsCount),
+									new XElement("rows", Mesh.RowsCount));
+				var positionElem = new XElement("position",
+										new XElement("column", Position.Column),
+										new XElement("row", Position.Row));
+
+				var buttonsElem = new XElement("buttons");
+				foreach (var cell in Mesh.Cells)
+				{
+					if (cell.Content is Button button)
+					{
+						buttonsElem.Add(new XElement("button",
+															new XAttribute("symbol", button.Content),
+															new XElement("position",
+																new XElement("row", cell.Row),
+																new XElement("column", cell.Column))));
+					}
+				}
+
+				return new XElement(Name,
+										sizeElem,
+										positionElem,
+										buttonsElem);
+			}
+			public virtual void ApplyLayout(XElement layoutSerialized)
+			{
+				var size = GetPanelSize(layoutSerialized);
+				SetSize(size);
+				ApplyButtonsLayout();
+
+				void ApplyButtonsLayout()
+				{
+					foreach (var buttonNode in layoutSerialized.Element("buttons").Elements("button"))
+					{
+						var buttonSymbol = buttonNode.Attribute("symbol").Value;
+						var buttonRow = int.Parse(buttonNode.Element("position").Element("row").Value);
+						var buttonColumn = int.Parse(buttonNode.Element("position").Element("column").Value);
+
+						var button = CreateButtonFromSymbol(buttonSymbol);
+
+						Mesh.Pick(buttonRow, buttonColumn).Content = button;
+					}
+				}
+			}
+			protected virtual PanelSize GetPanelSize(XElement root)
+			{
+				return new PanelSize()
+				{
+					Columns = int.Parse(root.Element("size").Element("columns").Value),
+					Rows = int.Parse(root.Element("size").Element("rows").Value)
+				};
+			}
+			protected virtual void SetSize(PanelSize size)
+			{
+				Mesh.SetSize(size.Rows, size.Columns);
+			}
+			protected abstract Button CreateButtonFromSymbol(string symbol);
+
+			protected struct PanelSize
+			{
+				internal int Columns;
+				internal int Rows;
+			}
+		}
 		class InputPanel : IPanel
 		{
 			#region IPanel impl
@@ -412,84 +494,25 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class UtilityPanel : IPanel, ILayoutablePanel
+		class UtilityPanel : GridMeshLayoutablePanel
 		{
-			#region IPanel impl
-			public UIElement UIElement => this;
-			public string Name => "utilities";
-			public bool PositionLocked { get; set; }
-			public IPanel.PanelPosition Position { get; set; }
-			#endregion
-			#region ILayoutable impl
-			public void ApplyLayout(XElement layoutSerialized)
+			#region GridMeshLayoutablePanel impl
+			public override string Name => "utilities";
+			protected override Button CreateButtonFromSymbol(string symbol)
 			{
-				SetMeshSize();
-				SetButtons();
+				var button = new Button() { Content = symbol };
+				button.Click += OnButtonClicked;
 
-				void SetMeshSize()
-				{
-					var columnsSize = int.Parse(layoutSerialized.Element("size").Element("columns").Value);
-					var rowsSize = int.Parse(layoutSerialized.Element("size").Element("rows").Value);
-					mesh.SetSize(rowsSize, columnsSize);
-				}
-				void SetButtons()
-				{
-					foreach (var buttonNode in layoutSerialized.Element("buttons").Elements("button"))
-					{
-						var buttonSymbol = buttonNode.Attribute("symbol").Value; // TODO: нужна ли здесь проверка на наличие необходимого обработчика?
-						var buttonRow = int.Parse(buttonNode.Element("position").Element("row").Value);
-						var buttonColumn = int.Parse(buttonNode.Element("position").Element("column").Value);
-
-						var button = new Button() { Content = buttonSymbol };
-						button.Click += OnButtonClicked;
-
-						mesh.Pick(buttonRow, buttonColumn).Content = button;
-					}
-				}
-			}
-
-			public XElement ExtractLayout()
-			{
-				var sizeElem = new XElement("size",
-							new XElement("columns", mesh.ColumnsCount),
-									new XElement("rows", mesh.RowsCount));
-				var positionElem = new XElement("position",
-										new XElement("column", Position.Column),
-										new XElement("row", Position.Row));
-
-				var buttonsElem = new XElement("buttons");
-				foreach (var cell in mesh.Cells)
-				{
-					if (cell.Content is Button button)
-					{
-						buttonsElem.Add(new XElement("button",
-															new XAttribute("symbol", button.Content),
-															new XElement("position",
-																new XElement("row", cell.Row),
-																new XElement("column", cell.Column))));
-					}
-				}
-
-				return new XElement(Name,
-										sizeElem,
-										positionElem,
-										buttonsElem);
+				return button;
 			}
 			#endregion
 			const string CalculationButtonSymbol = "=";
-			const string BackspaceButtonSymbol = "<-";
+			const string BackspaceButtonSymbol = "<-"; 
 			const string ClearButtonSymbol = "Clear";
-
-			readonly GridMesh mesh;
 
 			public static implicit operator UIElement(UtilityPanel panel)
 			{
-				return panel.mesh;
-			}
-
-			internal UtilityPanel()
-			{
-				mesh = new GridMesh();
+				return panel.Mesh;
 			}
 
 			internal Action BackspaceButtonClicked = delegate { };
@@ -530,68 +553,17 @@ namespace Calculator712.Calculator
 				return $"{LeftOperand}{Spacer}{Symbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
 			}
 		}
-		class NumericButtonsPanel : IPanel, ILayoutablePanel
+		class NumericButtonsPanel : GridMeshLayoutablePanel
 		{
-			#region IPanel impl
-			public string Name => "numericButtons";
-			public UIElement UIElement => this;
-			public bool PositionLocked { get; set; }
-			public IPanel.PanelPosition Position { get; set; }
-			#endregion
-			#region ILayoutable impl
-			public void ApplyLayout(XElement layoutSerialized)
+			#region GridMeshLayoutablePanel impl
+			public override string Name => "numericButtons";
+			protected override Button CreateButtonFromSymbol(string symbol)
 			{
-				SetMeshSize();
-				SetButtons();
+				var buttonNumber = int.Parse(symbol); // TODO: место потенциальной ошибки
+				var button = NumericButton.CreateWithNumber(buttonNumber);
+				button.Click += ButtonClickHandler;
 
-				void SetMeshSize()
-				{
-					var columnsSize = int.Parse(layoutSerialized.Element("size").Element("columns").Value);
-					var rowsSize = int.Parse(layoutSerialized.Element("size").Element("rows").Value);
-					Mesh.SetSize(rowsSize, columnsSize);
-				}
-				void SetButtons()
-				{
-					foreach (var buttonNode in layoutSerialized.Element("buttons").Elements("button"))
-					{
-						var buttonNumber = int.Parse(buttonNode.Attribute("symbol").Value);
-						var buttonRow = int.Parse(buttonNode.Element("position").Element("row").Value);
-						var buttonColumn = int.Parse(buttonNode.Element("position").Element("column").Value);
-
-						var button = NumericButton.CreateWithNumber(buttonNumber);
-						button.Click += ButtonClickHandler;
-
-						Mesh.Pick(buttonRow, buttonColumn).Content = button;
-					}
-				}
-			}
-
-			public XElement ExtractLayout()
-			{
-				var sizeElem = new XElement("size",
-											new XElement("columns", Mesh.ColumnsCount),
-													new XElement("rows", Mesh.RowsCount));
-				var positionElem = new XElement("position",
-										new XElement("column", Position.Column),
-										new XElement("row", Position.Row));
-
-				var buttonsElem = new XElement("buttons");
-				foreach (var cell in Mesh.Cells)
-				{
-					if (cell.Content is Button button)
-					{
-						buttonsElem.Add(new XElement("button",
-															new XAttribute("symbol", button.Content),
-															new XElement("position",
-																new XElement("row", cell.Row),
-																new XElement("column", cell.Column))));
-					}
-				}
-
-				return new XElement(Name,
-										sizeElem,
-										positionElem,
-										buttonsElem);
+				return button;
 			}
 			#endregion
 			public static implicit operator UIElement(NumericButtonsPanel panel)
@@ -600,13 +572,6 @@ namespace Calculator712.Calculator
 			}
 
 			internal Action<int> ButtonPressed = delegate { };
-
-			internal GridMesh Mesh { get; private set; }
-
-			internal NumericButtonsPanel()
-			{
-				Mesh = new GridMesh();
-			}
 
 			void ButtonClickHandler(object sender, RoutedEventArgs args)
 			{
@@ -636,81 +601,54 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class OperationButtonsPanel : IPanel, ILayoutablePanel
+		class OperationButtonsPanel : GridMeshLayoutablePanel
 		{
-			#region IPanel impl
-			public UIElement UIElement => this;
-			public string Name => "operationButtons";
-			public bool PositionLocked { get; set; }
-			public IPanel.PanelPosition Position { get; set; }
-			#endregion
-			#region ILayoutable impl
-			public void ApplyLayout(XElement layoutSerialized)
+			#region GridMeshLayoutablePanel impl
+			public override string Name => "operationButtons";
+			protected override Button CreateButtonFromSymbol(string symbol)
 			{
-				SetMeshSize();
-				SetButtons();
+				var button = new Button() { Content = symbol };
+				button.Click += ButtonClickHandler;
 
-				void SetMeshSize()
-				{
-					var columnsSize = int.Parse(layoutSerialized.Element("size").Element("columns").Value);
-					var rowsSize = int.Parse(layoutSerialized.Element("size").Element("rows").Value);
-					mesh.SetSize(rowsSize, columnsSize);
-				}
-				void SetButtons()
-				{
-					foreach (var buttonNode in layoutSerialized.Element("buttons").Elements("button"))
-					{
-						var buttonSymbol = buttonNode.Attribute("symbol").Value;
-						var buttonRow = int.Parse(buttonNode.Element("position").Element("row").Value);
-						var buttonColumn = int.Parse(buttonNode.Element("position").Element("column").Value);
-
-						var button = new Button() { Content = buttonSymbol };
-						button.Click += ButtonClickHandler;
-
-						mesh.Pick(buttonRow, buttonColumn).Content = button;
-					}
-				}
+				return button;
 			}
-
-			public XElement ExtractLayout()
+			public override XElement ExtractLayout() // TODO: undone?
 			{
-				throw new NotImplementedException();
+				return base.ExtractLayout();
 			}
 			#endregion
-			readonly GridMesh mesh;
 			string[] operationsSymbols;
 
 			public static implicit operator UIElement(OperationButtonsPanel panel)
 			{
-				return panel.mesh;
+				return panel.Mesh;
 			}
 
 			internal Action<string> ButtonPressed = delegate { };
 
 			public OperationButtonsPanel(string[] operations)
 			{
-				mesh = new GridMesh();
 				operationsSymbols = operations;
 			}
 
 			internal void AddOperation(string symbol)
 			{
-				if (!mesh.Cells.ContainsEmptyCells)
+				if (!Mesh.Cells.ContainsEmptyCells)
 				{
 					ExtendGrid();
 				}
-				var emptyCell = mesh.Cells.Empty.First();
+				var emptyCell = Mesh.Cells.Empty.First();
 				emptyCell.Content = CreateButton();
 
 				void ExtendGrid()
 				{
-					if (mesh.ColumnsCount < mesh.RowsCount)
+					if (Mesh.ColumnsCount < Mesh.RowsCount)
 					{
-						mesh.AddColumn();
+						Mesh.AddColumn();
 					}
 					else
 					{
-						mesh.AddRow();
+						Mesh.AddRow();
 					}
 				}
 				Button CreateButton()
