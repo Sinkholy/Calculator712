@@ -25,12 +25,12 @@ namespace Calculator712.Calculator
 	{
 		readonly GridMesh mainMesh;
 
-		IPanel[] panels => new IPanel[5] { numericPanel, utilities, history, input, operationsPanel };
-		OperationButtonsPanel operationsPanel;
-		NumericButtonsPanel numericPanel;
+		string[] operationsSymbols;
+		string[] numericSymbols = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0"};
+		string[] utilitiesSymbols = { "=", "<-" , "Clear" };
+		List<IPanel> panels;
 		InputPanel input;
 		HistoryPanel history;
-		UtilityPanel utilities;
 
 		public Action<CalculationData> CalculationRequested = delegate { };
 
@@ -38,23 +38,14 @@ namespace Calculator712.Calculator
 		{
 			InitializeComponent();
 
+			this.operationsSymbols = operationsSymbols;
+			panels = new List<IPanel>(10);
 			mainMesh = GridMesh.AssignTo(MainGrid);
 			CreatePanels();
 			Layout = layout;
 
 			void CreatePanels()
 			{
-				numericPanel = new NumericButtonsPanel();
-				numericPanel.ButtonPressed += NumericButtonClickHandler;
-
-				operationsPanel = new OperationButtonsPanel(operationsSymbols);
-				operationsPanel.ButtonPressed += OperationButtonClickHandler;
-
-				utilities = new UtilityPanel();
-				utilities.BackspaceButtonClicked += BackspaceButtonClickHandler;
-				utilities.ClearButtonClicked += ClearButtonClickHandler;
-				utilities.CalculateButtonClicked += CalculationButtonClickHandler;
-
 				input = new InputPanel();
 				history = new HistoryPanel();
 			}
@@ -76,7 +67,9 @@ namespace Calculator712.Calculator
 		void ApplyLayout()
 		{
 			ApplyMainPanelLayout();
-			SetupPanels();
+			var panelsNode = Layout.Root.Element("panels");
+			SetupDefaultPanels();
+			SetupLayoutablePanels();
 			AllignPanels();
 
 			void ApplyMainPanelLayout()
@@ -85,24 +78,47 @@ namespace Calculator712.Calculator
 				var rowsSize = int.Parse(Layout.Root.Element("size").Element("rows").Value);
 				mainMesh.SetSize(rowsSize, columnsSize);
 			}
-			void SetupPanels()
+			void SetupDefaultPanels()
 			{
-				var panelsNode = Layout.Root.Element("panels");
-				foreach (var panelNode in panelsNode.Elements("panel"))
+				var historyPanelNode = panelsNode.Element("defaultPanels").Elements("panel").Single(x => x.Attribute("name").Value == "history");
+				history.Position = new IPanel.PanelPosition()
+				{
+					Column = int.Parse(historyPanelNode.Element("position").Element("column").Value),
+					Row = int.Parse(historyPanelNode.Element("position").Element("row").Value)
+				};
+
+				var inputPanelNode = panelsNode.Element("defaultPanels").Elements("panel").Single(x => x.Attribute("name").Value == "input");
+				input.Position = new IPanel.PanelPosition()
+				{
+					Column = int.Parse(inputPanelNode.Element("position").Element("column").Value),
+					Row = int.Parse(inputPanelNode.Element("position").Element("row").Value)
+				};
+
+				mainMesh.Pick(input.Position.Row, input.Position.Column).Content = input.UIElement;
+				mainMesh.Pick(history.Position.Row, history.Position.Column).Content = history.UIElement;
+
+				foreach (var panelNode in panelsNode.Elements("defaultPanels"))
+				{
+					// TODO: undone
+				}
+			}
+			void SetupLayoutablePanels()
+			{
+				foreach (var panelNode in panelsNode.Element("layoutablePanels").Elements("panel"))
 				{
 					var panelName = panelNode.Attribute("name").Value;
-					var panel = panels.Single(x => x.Name == panelName); // TODO: потенциальное место появления ошибок
-
-					panel.Position = new IPanel.PanelPosition()
+					var panel = new GridMeshLayoutablePanel(panelName)
 					{
-						Column = int.Parse(panelNode.Element("position").Element("column").Value),
-						Row = int.Parse(panelNode.Element("position").Element("row").Value)
+						Position = new IPanel.PanelPosition()
+						{
+							Column = int.Parse(panelNode.Element("position").Element("column").Value),
+							Row = int.Parse(panelNode.Element("position").Element("row").Value)
+						}
 					};
 
-					if (panel is ILayoutablePanel layoutablePanel)
-					{
-						layoutablePanel.ApplyLayout(panelNode);
-					}
+					panel.ButtonClicked += PanelButtonCommandRouter;
+					panel.ApplyLayout(panelNode);
+					panels.Add(panel);
 				}
 			}
 			void AllignPanels()
@@ -114,31 +130,36 @@ namespace Calculator712.Calculator
 			}
 		}
 		#endregion
-		void CalculationButtonClickHandler()
+		#region Panels buttons handlers
+		void PanelButtonCommandRouter(IPanel panel, Button button)
 		{
-			if (input.ComputationReadyToProcess)
+			var symbol = button.Content.ToString();
+			if (numericSymbols.Contains(symbol))
 			{
-				var current = input.Computation;
-				var calculationData = new CalculationData(current.Symbol, current.LeftOperand, current.RightOperand);
-				CalculationRequested(calculationData);
+				NumericButtonClickHandler(symbol);
+			}
+			else if (operationsSymbols.Contains(symbol))
+			{
+				OperationButtonClickHandler(symbol);
+			}
+			else if (utilitiesSymbols.Contains(symbol))
+			{
+				UtilitiesButtonClickHandler(symbol);
+			}
+			else
+			{
+				throw new ArgumentException(); // TODO: исключение
 			}
 		}
-		void BackspaceButtonClickHandler()
+		void NumericButtonClickHandler(string symbol)
 		{
-			input.Clear();
-		}
-		void ClearButtonClickHandler()
-		{
-			history.Clear();
-		}
-		void NumericButtonClickHandler(int value)
-		{
+			var number = int.Parse(symbol);
 			if (input.ContainsResult)
 			{
 				history.Add(input.Computation);
 				input.Clear();
 			}
-			input.AddToCurrentOperand(value);
+			input.AddToCurrentOperand(number);
 		}
 		void OperationButtonClickHandler(string operation)
 		{
@@ -147,6 +168,41 @@ namespace Calculator712.Calculator
 				input.SetOperation(operation);
 			}
 		}
+		void UtilitiesButtonClickHandler(string symbol)
+		{
+			switch (symbol)
+			{
+				case "=":
+					CalculationButtonClickHandler();
+					break;
+				case "<-":
+					BackspaceButtonClickHandler();
+					break;
+				case "Clear":
+					ClearButtonClickHandler();
+					break;
+			}
+
+			void CalculationButtonClickHandler()
+			{
+				if (input.ComputationReadyToProcess)
+				{
+					var current = input.Computation;
+					var calculationData = new CalculationData(current.Symbol, current.LeftOperand, current.RightOperand);
+					CalculationRequested(calculationData);
+				}
+			}
+			void BackspaceButtonClickHandler()
+			{
+				input.Clear();
+			}
+			void ClearButtonClickHandler()
+			{
+				history.Clear();
+			}
+		}
+
+		#endregion
 		public void SetResult(int value)
 		{
 			input.SetResult(value);
@@ -193,19 +249,25 @@ namespace Calculator712.Calculator
 		}
 		abstract class GridMeshPanel : IPanel
 		{
-			abstract public string Name { get; }
+			internal Action<GridMeshPanel, Button> ButtonClicked = delegate { };
+
+			public string Name { get; protected set; }
 			public bool PositionLocked { get; set; }
 			public IPanel.PanelPosition Position { get; set; }
 			public UIElement UIElement => Mesh;
 			protected GridMesh Mesh { get; private init; }
 
-			internal GridMeshPanel()
+			internal GridMeshPanel(string name)
 			{
+				Name = name;
 				Mesh = new GridMesh();
 			}
 		}
-		abstract class GridMeshLayoutablePanel : GridMeshPanel, ILayoutablePanel
+		class GridMeshLayoutablePanel : GridMeshPanel, ILayoutablePanel
 		{
+			public GridMeshLayoutablePanel(string name) 
+				: base(name) { }
+
 			public virtual XElement ExtractLayout()
 			{
 				var sizeElem = new XElement("size",
@@ -248,6 +310,7 @@ namespace Calculator712.Calculator
 						var buttonColumn = int.Parse(buttonNode.Element("position").Element("column").Value);
 
 						var button = CreateButtonFromSymbol(buttonSymbol);
+						button.Click += (btn, _) => ButtonClicked(this, btn as Button);
 
 						Mesh.Pick(buttonRow, buttonColumn).Content = button;
 					}
@@ -265,7 +328,10 @@ namespace Calculator712.Calculator
 			{
 				Mesh.SetSize(size.Rows, size.Columns);
 			}
-			protected abstract Button CreateButtonFromSymbol(string symbol);
+			protected virtual Button CreateButtonFromSymbol(string symbol)
+			{
+				return new Button() { Content = symbol };
+			}
 
 			protected struct PanelSize
 			{
@@ -494,50 +560,6 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		class UtilityPanel : GridMeshLayoutablePanel
-		{
-			#region GridMeshLayoutablePanel impl
-			public override string Name => "utilities";
-			protected override Button CreateButtonFromSymbol(string symbol)
-			{
-				var button = new Button() { Content = symbol };
-				button.Click += OnButtonClicked;
-
-				return button;
-			}
-			#endregion
-			const string CalculationButtonSymbol = "=";
-			const string BackspaceButtonSymbol = "<-"; 
-			const string ClearButtonSymbol = "Clear";
-
-			public static implicit operator UIElement(UtilityPanel panel)
-			{
-				return panel.Mesh;
-			}
-
-			internal Action BackspaceButtonClicked = delegate { };
-			internal Action ClearButtonClicked = delegate { };
-			internal Action CalculateButtonClicked = delegate { };
-
-			void OnButtonClicked(object obj, RoutedEventArgs args)
-			{
-				var button = obj as Button;
-				switch (button.Content)
-				{
-					case CalculationButtonSymbol:
-						CalculateButtonClicked();
-						break;
-					case ClearButtonSymbol:
-						ClearButtonClicked();
-						break;
-					case BackspaceButtonSymbol:
-						BackspaceButtonClicked();
-						break;
-					default:
-						throw new ArgumentException(); // TODO: исключение
-				}
-			}
-		}
 		class ComputationData
 		{
 			const string EqualSign = "=";
@@ -551,119 +573,6 @@ namespace Calculator712.Calculator
 			public override string ToString()
 			{
 				return $"{LeftOperand}{Spacer}{Symbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
-			}
-		}
-		class NumericButtonsPanel : GridMeshLayoutablePanel
-		{
-			#region GridMeshLayoutablePanel impl
-			public override string Name => "numericButtons";
-			protected override Button CreateButtonFromSymbol(string symbol)
-			{
-				var buttonNumber = int.Parse(symbol); // TODO: место потенциальной ошибки
-				var button = NumericButton.CreateWithNumber(buttonNumber);
-				button.Click += ButtonClickHandler;
-
-				return button;
-			}
-			#endregion
-			public static implicit operator UIElement(NumericButtonsPanel panel)
-			{
-				return panel.Mesh;
-			}
-
-			internal Action<int> ButtonPressed = delegate { };
-
-			void ButtonClickHandler(object sender, RoutedEventArgs args)
-			{
-				var button = sender as NumericButton;
-				ButtonPressed(button.Value);
-			}
-
-			class NumericButton : Button
-			{
-				internal static NumericButton CreateWithNumber(int num)
-				{
-					return new NumericButton()
-					{
-						Value = num
-					};
-				}
-
-				int value;
-				internal int Value
-				{
-					get => value;
-					set
-					{
-						this.value = value;
-						Content = value;
-					}
-				}
-			}
-		}
-		class OperationButtonsPanel : GridMeshLayoutablePanel
-		{
-			#region GridMeshLayoutablePanel impl
-			public override string Name => "operationButtons";
-			protected override Button CreateButtonFromSymbol(string symbol)
-			{
-				var button = new Button() { Content = symbol };
-				button.Click += ButtonClickHandler;
-
-				return button;
-			}
-			public override XElement ExtractLayout() // TODO: undone?
-			{
-				return base.ExtractLayout();
-			}
-			#endregion
-			string[] operationsSymbols;
-
-			public static implicit operator UIElement(OperationButtonsPanel panel)
-			{
-				return panel.Mesh;
-			}
-
-			internal Action<string> ButtonPressed = delegate { };
-
-			public OperationButtonsPanel(string[] operations)
-			{
-				operationsSymbols = operations;
-			}
-
-			internal void AddOperation(string symbol)
-			{
-				if (!Mesh.Cells.ContainsEmptyCells)
-				{
-					ExtendGrid();
-				}
-				var emptyCell = Mesh.Cells.Empty.First();
-				emptyCell.Content = CreateButton();
-
-				void ExtendGrid()
-				{
-					if (Mesh.ColumnsCount < Mesh.RowsCount)
-					{
-						Mesh.AddColumn();
-					}
-					else
-					{
-						Mesh.AddRow();
-					}
-				}
-				Button CreateButton()
-				{
-					var button = new Button() { Content = symbol };
-					button.Click += ButtonClickHandler;
-					return button;
-				}
-			}
-
-			void ButtonClickHandler(object sender, RoutedEventArgs args)
-			{
-				var button = sender as Button;
-				var operation = button.Content as string;
-				ButtonPressed(operation); // TODO: possible NRE?
 			}
 		}
 		#endregion
