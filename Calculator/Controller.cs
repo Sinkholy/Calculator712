@@ -147,7 +147,7 @@ namespace Calculator712.Calculator
 		{
 			if (inputPanel.ContainsResult)
 			{
-				historyPanel.Add(inputPanel.Computation);
+				historyPanel.Add(inputPanel.Calculation);
 				inputPanel.Clear();
 			}
 			inputPanel.AddToCurrentOperand(number);
@@ -176,13 +176,11 @@ namespace Calculator712.Calculator
 
 			void CalculationButtonClickHandler()
 			{
-				if (inputPanel.ComputationReadyToProcess)
+				if (inputPanel.CalculationReadyToProcess)
 				{
-					var current = inputPanel.Computation;
-					var calculationData = new CalculationData(current.Symbol, current.LeftOperand, current.RightOperand);
-
-					var targetOperation = GetOperationBySymbol(calculationData.OperationSymbol);
-					var result = targetOperation.Calculate(calculationData.LeftOperand, calculationData.RightOperand);
+					var current = inputPanel.Calculation;
+					var targetOperation = GetOperationBySymbol(current.OperationSymbol);
+					var result = targetOperation.Calculate(current.LeftOperand, current.RightOperand);
 					inputPanel.SetResult(result);
 				}
 			}
@@ -333,7 +331,7 @@ namespace Calculator712.Calculator
 			public IPanel.PanelPosition Position { get; set; }
 			#endregion
 
-			ComputationData computation;
+			Calculation calculation;
 			List<int> input;
 			int firstOperandNumbersCount;
 			View view;
@@ -345,22 +343,22 @@ namespace Calculator712.Calculator
 
 			internal InputPanel()
 			{
-				computation = new ComputationData();
+				calculation = new Calculation();
 				input = new List<int>();
 				view = new View();
 			}
 
 			internal bool ContainsLeftOperand => input.Count > 0;
 			internal bool ContainsRightOperand => firstOperandNumbersCount > 0;
-			internal bool OperationAdded => !string.IsNullOrWhiteSpace(computation.Symbol);
-			internal bool ContainsResult => computation.Result != 0; // UNDONE: затычка
-			internal bool ComputationReadyToProcess => ContainsLeftOperand && OperationAdded && ContainsRightOperand;
-			internal ComputationData Computation
+			internal bool OperationAdded => !string.IsNullOrWhiteSpace(calculation.OperationSymbol);
+			internal bool ContainsResult => calculation.Result != 0; // UNDONE: затычка
+			internal bool CalculationReadyToProcess => ContainsLeftOperand && OperationAdded && ContainsRightOperand;
+			internal Calculation Calculation
 			{
 				get
 				{
 					CalculateOperands();
-					return computation;
+					return calculation;
 				}
 			}
 
@@ -371,26 +369,26 @@ namespace Calculator712.Calculator
 			}
 			internal void SetOperation(string symbol)
 			{
-				computation.Symbol = symbol;
+				calculation.OperationSymbol = symbol;
 				firstOperandNumbersCount = input.Count;
 				view.Append(symbol);
 			}
 			internal void SetResult(int value)
 			{
-				computation.Result = value;
-				view.Set(computation.ToString());
+				calculation.Result = value;
+				view.Set(calculation.ToString());
 			}
 			internal void Clear()
 			{
 				input.Clear();
 				firstOperandNumbersCount = 0;
 				view.Clear();
-				computation = new ComputationData();
+				calculation = new Calculation();
 			}
 			void CalculateOperands()
 			{
-				computation.LeftOperand = CalculateLeftOperand();
-				computation.RightOperand = CalculateRightOperand();
+				calculation.LeftOperand = CalculateLeftOperand();
+				calculation.RightOperand = CalculateRightOperand();
 
 				int CalculateLeftOperand()
 				{
@@ -453,32 +451,19 @@ namespace Calculator712.Calculator
 				}
 			}
 		}
-		public class CalculationData
-		{
-			public CalculationData(string operationSymbol, int leftOperand, int rightOperand)
-			{
-				OperationSymbol = operationSymbol;
-				LeftOperand = leftOperand;
-				RightOperand = rightOperand;
-			}
-
-			public string OperationSymbol { get; }
-			public int LeftOperand { get; }
-			public int RightOperand { get; }
-		}
-		class ComputationData
+		struct Calculation
 		{
 			const string EqualSign = "=";
 			const string Spacer = " ";
 
 			internal int LeftOperand { get; set; }
 			internal int RightOperand { get; set; }
-			internal string Symbol { get; set; }
+			internal string OperationSymbol { get; set; }
 			internal int Result { get; set; }
 
 			public override string ToString()
 			{
-				return $"{LeftOperand}{Spacer}{Symbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
+				return $"{LeftOperand}{Spacer}{OperationSymbol}{Spacer}{RightOperand}{Spacer}{EqualSign}{Spacer}{Result}";
 			}
 		}
 		class HistoryPanel : IPanel
@@ -504,14 +489,14 @@ namespace Calculator712.Calculator
 				view = new View();
 			}
 
-			internal IReadOnlyCollection<ComputationData> GetArchive()
+			internal IReadOnlyCollection<Calculation> GetArchive()
 			{
 				return archive.GetFullArchive();
 			}
-			internal void Add(ComputationData computation)
+			internal void Add(Calculation calculation)
 			{
-				archive.Add(computation);
-				view.Add(computation.ToString());
+				archive.Add(calculation);
+				view.Add(calculation.ToString());
 			}
 			internal void Clear()
 			{
@@ -545,31 +530,31 @@ namespace Calculator712.Calculator
 			}
 			class Archive
 			{
-				readonly List<ComputationData> computations;
+				readonly List<Calculation> calculations;
 
 				internal Archive()
 				{
-					computations = new List<ComputationData>();
+					calculations = new List<Calculation>();
 				}
 
-				internal void Add(ComputationData computation)
+				internal void Add(Calculation calculation)
 				{
-					computations.Add(computation);
+					calculations.Add(calculation);
 				}
 				internal void Clear()
 				{
-					computations.Clear();
+					calculations.Clear();
 				}
-				internal ComputationData this[int index]
+				internal Calculation this[int index]
 				{
 					get
 					{
-						return computations[index];
+						return calculations[index];
 					}
 				}
-				internal IReadOnlyCollection<ComputationData> GetFullArchive()
+				internal IReadOnlyCollection<Calculation> GetFullArchive()
 				{
-					return computations;
+					return calculations;
 				}
 			}
 		}
