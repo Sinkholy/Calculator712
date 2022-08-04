@@ -183,6 +183,20 @@ namespace Calculator712
 			var cell = Pick(args.CellRow, args.CellColumn);
 			cell.Content.Visibility = args.New;
 		}
+		internal void Reset() // TODO: to refactor
+		{
+			foreach(var cell in cells)
+			{
+				cell.ClearContent();
+			}
+			foreach (var column in rows)
+			{
+				column.Clear();
+			}
+			rows.Clear();
+			grid.RowDefinitions.Clear();
+			grid.ColumnDefinitions.Clear();
+		}
 		internal void SwapCells(Cell a, Cell b)
 		{
 			int aOriginalRow = a.Row;
