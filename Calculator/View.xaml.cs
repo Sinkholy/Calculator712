@@ -1,38 +1,23 @@
-﻿using System;
-using System.Collections;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+﻿using System.Collections.Generic;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
-using System.Xml.Linq;
-
-using static Calculator712.Calculator.View;
 
 namespace Calculator712.Calculator
 {
 	/// <summary>
 	/// Interaction logic for Window.xaml
 	/// </summary>
-	public partial class View : Window
+	public partial class PanelsHolder : Window
 	{
 		readonly GridMesh mainMesh;
 
-		internal View()
+		internal PanelsHolder()
 		{
 			InitializeComponent();
 
 			mainMesh = GridMesh.AssignTo(MainGrid);
 		}
 
-		internal void ApplyLayout(PanelholderLayout layout)
+		internal void ApplyLayout(Layout layout)
 		{
 			mainMesh.Reset();
 			mainMesh.SetSize(layout.RowsSize, layout.ColumnsSize);
@@ -43,7 +28,7 @@ namespace Calculator712.Calculator
 			}
 		}
 
-		internal class PanelholderLayout
+		internal class Layout
 		{
 			internal int RowsSize { get; init; }
 			internal int ColumnsSize { get; init; }

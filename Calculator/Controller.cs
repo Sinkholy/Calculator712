@@ -7,7 +7,6 @@ using System.Windows;
 using System.Windows.Controls;
 using System.Xml.Linq;
 
-using static Calculator712.Calculator.View;
 
 namespace Calculator712.Calculator
 {
@@ -21,7 +20,7 @@ namespace Calculator712.Calculator
 		HistoryPanel historyPanel;
 		InputPanel inputPanel;
 
-		public View View { get; }
+		public PanelsHolder PanelsHolder { get; }
 		ICalculatorOperation[] Operations { get; }
 
 		#region Layout handling
@@ -43,13 +42,13 @@ namespace Calculator712.Calculator
 			SetupDefaultPanels();
 			SetupLayoutablePanels();
 
-			var panelholderLayout = new PanelholderLayout()
+			var layout = new PanelsHolder.Layout()
 			{
 				RowsSize = int.Parse(Layout.Root.Element("size").Element("rows").Value),
 				ColumnsSize = int.Parse(Layout.Root.Element("size").Element("columns").Value),
 				Panels = panels
 			};
-			View.ApplyLayout(panelholderLayout);
+			PanelsHolder.ApplyLayout(layout);
 
 			void SetupDefaultPanels()
 			{
@@ -102,7 +101,7 @@ namespace Calculator712.Calculator
 			historyPanel = new HistoryPanel();
 			inputPanel = new InputPanel();
 			panels = new List<IPanel>();
-			View = new View();
+			PanelsHolder = new PanelsHolder();
 
 			Operations = operations;
 			Layout = layout;
