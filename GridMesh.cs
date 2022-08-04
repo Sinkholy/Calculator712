@@ -28,7 +28,7 @@ namespace Calculator712
 		{
 			return new GridMesh(rows, columns);
 		}
-		internal GridMesh(Grid grid)
+		internal GridMesh(Grid grid) // REFACTOR: вывести единый конструктор и вызывать его через base
 		{
 			this.grid = grid;
 			rows = new List<List<Cell>>();
@@ -344,24 +344,38 @@ namespace Calculator712
 				public CellEnumerator(CellsEnumerable cells)
 				{
 					this.cells = cells;
-					currentRow = 0;
-					currentColumn = -1;
+					Reset();
 				}
 
 				public Cell Current => cells.rows[currentRow][currentColumn];
 				object IEnumerator.Current => Current;
 				int RowsCount => cells.rows.Count;
-				int ColumnsCount => cells.rows.Count == 0 ? 0 : cells.rows[0].Count;
+				int CurrentRowColumnsCount => cells.rows.Count == 0 
+																? 0 
+																: cells.rows[currentRow].Count;
 
 				public void Dispose() { }
 				public bool MoveNext()
 				{
-					if (currentColumn++ == ColumnsCount - 1)
+					if (IsLastCellInColumn())
+					{
+						MoveToNextRow();
+					}
+					else
+					{
+						currentColumn++;
+					}
+					return currentRow < RowsCount;
+
+					bool IsLastCellInColumn()
+					{
+						return currentColumn == CurrentRowColumnsCount - 1;
+					}
+					void MoveToNextRow()
 					{
 						currentRow++;
 						currentColumn = 0;
 					}
-					return currentRow != RowsCount;
 				}
 				public void Reset()
 				{
